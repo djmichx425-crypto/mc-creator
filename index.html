@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Enchant SMP — Narzędzia</title>
+<style>
+  :root {
+    --bg-0: #0a0a0c;
+    --bg-1: #131318;
+    --bg-2: #1a1a21;
+    --panel: #101014;
+    --line: #23232b;
+    --line-bright: #33333e;
+    --text: #f2f2f5;
+    --text-dim: #8b8b96;
+    --accent: #2f6bff;
+    --accent-dim: #1f4fd6;
+    --grid: #0e0e12;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    min-height: 100%;
+    background: var(--bg-0);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+  }
+
+  body {
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 28px 28px;
+    background-color: var(--bg-0);
+  }
+
+  .wrap {
+    max-width: 1180px;
+    margin: 0 auto;
+    padding: 48px 20px 60px;
+  }
+
+  header {
+    display: flex;
+    align-items: flex-start;
+    gap: 16px;
+    margin-bottom: 40px;
+    padding-bottom: 24px;
+    border-bottom: 1px solid var(--line);
+  }
+  header .tag {
+    width: 12px; height: 12px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 16px 3px rgba(47,107,255,0.55);
+    flex-shrink: 0;
+    margin-top: 6px;
+  }
+  h1 { font-size: 28px; letter-spacing: -0.02em; margin: 0 0 6px; font-weight: 800; }
+  header .sub { color: var(--text-dim); font-size: 14px; line-height: 1.5; max-width: 640px; }
+
+  .section-title {
+    font-size: 12px;
+    text-transform: uppercase;
+    letter-spacing: 0.12em;
+    color: var(--accent);
+    font-weight: 700;
+    margin: 40px 0 16px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .section-title::after { content: ''; flex: 1; height: 1px; background: var(--line); }
+  .section-title:first-of-type { margin-top: 0; }
+
+  .grid {
+    display: grid;
+    grid-template-columns: repeat(3, 1fr);
+    gap: 16px;
+  }
+  @media (max-width: 900px) {
+    .grid { grid-template-columns: repeat(2, 1fr); }
+  }
+  @media (max-width: 620px) {
+    .grid { grid-template-columns: 1fr; }
+  }
+
+  .card {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 14px;
+    padding: 20px;
+    text-decoration: none;
+    color: var(--text);
+    display: flex;
+    flex-direction: column;
+    gap: 10px;
+    transition: border-color 0.15s ease, transform 0.15s ease;
+    position: relative;
+    overflow: hidden;
+  }
+  .card:hover {
+    border-color: var(--accent);
+    transform: translateY(-2px);
+  }
+  .card .icon {
+    width: 38px;
+    height: 38px;
+    border-radius: 10px;
+    background: var(--bg-2);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    font-size: 19px;
+    border: 1px solid var(--line);
+  }
+  .card .name {
+    font-size: 15px;
+    font-weight: 700;
+    letter-spacing: -0.01em;
+  }
+  .card .desc {
+    font-size: 12.5px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    flex: 1;
+  }
+  .card .tags {
+    display: flex;
+    gap: 6px;
+    flex-wrap: wrap;
+    margin-top: 2px;
+  }
+  .card .tags span {
+    font-size: 10px;
+    text-transform: uppercase;
+    letter-spacing: 0.05em;
+    color: var(--text-dim);
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 5px;
+    padding: 2px 7px;
+  }
+  .card .arrow {
+    position: absolute;
+    top: 18px;
+    right: 18px;
+    color: var(--line-bright);
+    font-size: 15px;
+    transition: color 0.15s ease, transform 0.15s ease;
+  }
+  .card:hover .arrow {
+    color: var(--accent);
+    transform: translate(2px, -2px);
+  }
+
+  footer {
+    margin-top: 56px;
+    padding-top: 20px;
+    border-top: 1px solid var(--line);
+    color: var(--text-dim);
+    font-size: 11.5px;
+    text-align: center;
+  }
+  footer a { color: var(--text-dim); }
+</style>
+</head>
+<body>
+<div class="wrap">
+
+  <header>
+    <div class="tag"></div>
+    <div>
+      <h1>Enchant SMP — Narzędzia</h1>
+      <div class="sub">Zestaw generatorów i kreatorów do konfigów, GUI, hologramów, NPC i ogłoszeń serwerowych. Wszystko działa lokalnie w przeglądarce — nic nie jest wysyłane na żaden serwer.</div>
+    </div>
+  </header>
+
+  <p class="section-title">Wygląd rangi i tekstu</p>
+  <div class="grid">
+
+    <a class="card" href="generator-prefixow.html">
+      <div class="icon">★</div>
+      <div class="name">Generator Prefixów</div>
+      <div class="desc">Pixel-artowy generator PNG z prefiksem rangi — gradienty, obramowania, zaokrąglone rogi.</div>
+      <div class="tags"><span>PNG</span><span>Pixel art</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+    <a class="card" href="generator-gradientow.html">
+      <div class="icon">◈</div>
+      <div class="name">Generator Gradientów</div>
+      <div class="desc">Kolorowanie tekstu gradientem — eksport do MiniMessage, hex, Spigot &amp;x, sekcji §x, CMI/Essentials.</div>
+      <div class="tags"><span>MiniMessage</span><span>Legacy</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+    <a class="card" href="generator-motd.html">
+      <div class="icon">🖧</div>
+      <div class="name">Generator MOTD</div>
+      <div class="desc">Dwulinijkowy komunikat serwera na liście serwerów, z gradientem i licznikiem znaków.</div>
+      <div class="tags"><span>server.properties</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+  </div>
+
+  <p class="section-title">Interfejsy w grze</p>
+  <div class="grid">
+
+    <a class="card" href="kreator-gui.html">
+      <div class="icon">▦</div>
+      <div class="name">Kreator GUI</div>
+      <div class="desc">Menu DeluxeMenus z prawdziwymi teksturami itemów Minecraft (1765 materiałów) — YAML lub Skript.</div>
+      <div class="tags"><span>DeluxeMenus</span><span>Skript</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+    <a class="card" href="kreator-scoreboard.html">
+      <div class="icon">▤</div>
+      <div class="name">Kreator Scoreboard</div>
+      <div class="desc">Tablica wyników TAB — linie, gradient, podgląd 1:1 jak w grze.</div>
+      <div class="tags"><span>TAB</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+    <a class="card" href="kreator-tab.html">
+      <div class="icon">☰</div>
+      <div class="name">Kreator TAB</div>
+      <div class="desc">Nagłówek i stopka listy graczy (Tab list) — z gradientem i podglądem.</div>
+      <div class="tags"><span>TAB</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+    <a class="card" href="kreator-hologramy.html">
+      <div class="icon">☁</div>
+      <div class="name">Kreator Hologramów</div>
+      <div class="desc">Tekst unoszący się nad blokiem — MiniMessage, gradient, komendy lub YAML.</div>
+      <div class="tags"><span>FancyHolograms</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+    <a class="card" href="kreator-npc.html">
+      <div class="icon">◉</div>
+      <div class="name">Kreator NPC</div>
+      <div class="desc">NPC z nazwą, skinem i akcjami na klik (komendy, teleport, wiadomości).</div>
+      <div class="tags"><span>FancyNpcs</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+  </div>
+
+  <p class="section-title">Discord i społeczność</p>
+  <div class="grid">
+
+    <a class="card" href="kreator-discord-broadcast.html">
+      <div class="icon">📢</div>
+      <div class="name">Kreator Broadcastów Discord</div>
+      <div class="desc">Podgląd embeda 1:1 jak na Discordzie — kolor, pola, obrazek, eksport webhook JSON.</div>
+      <div class="tags"><span>Webhook</span><span>Embed</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+    <a class="card" href="kreator-regulamin.html">
+      <div class="icon">📜</div>
+      <div class="name">Kreator Regulaminu</div>
+      <div class="desc">Regulamin serwera jako embed Discord — kategorie, ponumerowane punkty, kary.</div>
+      <div class="tags"><span>Webhook</span><span>Embed</span></div>
+      <div class="arrow">↗</div>
+    </a>
+
+  </div>
+
+  <footer>
+    Enchant SMP · enchantsmp.pl · wszystkie narzędzia działają w 100% lokalnie w przeglądarce
+  </footer>
+
+</div>
+</body>
+</html>
