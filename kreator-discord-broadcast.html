@@ -157,9 +157,17 @@
     padding: 0 2px;
     transition: color 0.05s ease;
   }
+  .discord-spoiler .discord-mention {
+    background: transparent;
+    color: inherit;
+  }
   .discord-spoiler.revealed {
     background: #3a3c43;
     color: inherit;
+  }
+  .discord-spoiler.revealed .discord-mention {
+    background: rgba(88,101,242,0.3);
+    color: #c9cdfb;
   }
   .discord-embed {
     display: flex;
@@ -755,7 +763,8 @@ Event trwa do niedzieli 23:59.</textarea>
   }
 
   function buildPingContent(){
-    return state.pings.map(formatSinglePing).filter(Boolean).join(' ');
+    const joined = state.pings.map(formatSinglePing).filter(Boolean).join(' ');
+    return joined ? `||${joined}||` : '';
   }
 
   function renderPingsList(){
@@ -794,15 +803,16 @@ Event trwa do niedzieli 23:59.</textarea>
 
   function renderPingPreview(){
     const row = document.getElementById('contentLineRow');
-    const content = buildPingContent();
-    if (!content){
+    const joined = state.pings.map(formatSinglePing).filter(Boolean).join(' ');
+    if (!joined){
       row.style.display = 'none';
       row.innerHTML = '';
       return;
     }
     row.style.display = 'block';
-    row.innerHTML = state.pings.map(formatSinglePing).filter(Boolean)
+    const mentionsHtml = state.pings.map(formatSinglePing).filter(Boolean)
       .map(p => `<span class="discord-mention">${escapeHtml(p)}</span>`).join(' ');
+    row.innerHTML = `<span class="discord-spoiler" onclick="this.classList.add('revealed')">${mentionsHtml}</span>`;
   }
 
   function renderPreview(){
