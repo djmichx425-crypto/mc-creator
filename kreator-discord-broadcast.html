@@ -149,6 +149,13 @@
     border-radius: 3px;
     font-weight: 500;
   }
+  .discord-timestamp-tag {
+    background: rgba(88,101,242,0.12);
+    color: #dbdee1;
+    padding: 0 2px;
+    border-radius: 3px;
+    cursor: default;
+  }
   .discord-spoiler {
     background: #1e1f22;
     color: transparent;
@@ -161,6 +168,10 @@
     background: transparent;
     color: inherit;
   }
+  .discord-spoiler .discord-timestamp-tag {
+    background: transparent;
+    color: inherit;
+  }
   .discord-spoiler.revealed {
     background: #3a3c43;
     color: inherit;
@@ -168,6 +179,10 @@
   .discord-spoiler.revealed .discord-mention {
     background: rgba(88,101,242,0.3);
     color: #c9cdfb;
+  }
+  .discord-spoiler.revealed .discord-timestamp-tag {
+    background: rgba(88,101,242,0.12);
+    color: #dbdee1;
   }
   .discord-embed {
     display: flex;
@@ -563,6 +578,18 @@
 
       <div class="panel" style="margin-top:16px;">
         <div class="panel-inner">
+          <p class="panel-title">Webhook</p>
+          <div class="field">
+            <label class="flabel">URL webhooka Discord</label>
+            <input type="text" id="webhookUrlInput" placeholder="https://discord.com/api/webhooks/...">
+          </div>
+          <button class="export-btn" id="sendWebhookBtn">Wyślij na Discord</button>
+          <div class="hint" id="webhookSendHint">Link zapisuje się tylko w tej przeglądarce (localStorage), nigdzie indziej nie jest wysyłany. Każdy kto zna ten URL może wysyłać wiadomości na Twój kanał — nie udostępniaj go publicznie.</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-inner">
           <p class="panel-title">Eksport</p>
           <div class="seg" id="outputFormatSeg">
             <button data-val="json" class="active">Webhook JSON</button>
@@ -687,6 +714,36 @@ Event trwa do niedzieli 23:59.</textarea>
         </div>
       </div>
 
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-inner">
+          <p class="panel-title">Odliczanie czasu</p>
+          <div class="field">
+            <label class="flabel">Data i godzina</label>
+            <input type="datetime-local" id="timestampDateInput">
+          </div>
+          <div class="field">
+            <label class="flabel">Styl wyświetlania</label>
+            <select id="timestampStyleSelect">
+              <option value="R" selected>Względny — „za 2 godziny” (aktualizuje się na żywo)</option>
+              <option value="f">Krótka data i godzina — „6 marca 2026 16:20”</option>
+              <option value="F">Pełna data i godzina — „piątek, 6 marca 2026 16:20”</option>
+              <option value="d">Krótka data — „06.03.2026”</option>
+              <option value="D">Pełna data — „6 marca 2026”</option>
+              <option value="t">Krótki czas — „16:20”</option>
+              <option value="T">Długi czas — „16:20:00”</option>
+            </select>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">
+              <input type="checkbox" id="timestampSpoilerCheckbox" style="accent-color:var(--accent);cursor:pointer;">
+              Ukryj pod spoilerem (||czas||)
+            </label>
+          </div>
+          <button class="add-btn" id="insertTimestampBtn">Wstaw w miejscu kursora</button>
+          <div class="hint">Wstawia się dokładnie tak jak emotki — kliknij najpierw w polu (tytuł, opis, stopka lub pole), gdzie ma się pojawić, potem wybierz datę i naciśnij wstaw. Discord pokaże każdemu czytającemu czas w jego własnej strefie czasowej.</div>
+        </div>
+      </div>
+
     </div>
   </div>
 </div>
@@ -732,8 +789,50 @@ Event trwa do niedzieli 23:59.</textarea>
 
   // Renders a small subset of Discord's Markdown for the preview: bold, italic, underline,
   // strikethrough, inline code. Applied in an order that avoids ** being partially consumed by *.
+  // Formats a Discord <t:UNIX:STYLE> tag into the human-readable text Discord would show,
+  // using the browser's own locale-aware date formatting. R (relative) gets special handling
+  // since it's not a fixed calendar format but a live "in X / X ago" computed against now.
+  function formatDiscordTimestamp(unixSeconds, style){
+    const date = new Date(unixSeconds * 1000);
+    if (style === 'R') return formatRelativeTime(unixSeconds);
+    const optionsByStyle = {
+      t: { hour: '2-digit', minute: '2-digit' },
+      T: { hour: '2-digit', minute: '2-digit', second: '2-digit' },
+      d: { day: '2-digit', month: '2-digit', year: 'numeric' },
+      D: { day: 'numeric', month: 'long', year: 'numeric' },
+      f: { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' },
+      F: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' },
+    };
+    const opts = optionsByStyle[style] || optionsByStyle.f;
+    return new Intl.DateTimeFormat('pl-PL', opts).format(date);
+  }
+
+  function formatRelativeTime(unixSeconds){
+    const diffSeconds = unixSeconds - Math.floor(Date.now() / 1000);
+    const abs = Math.abs(diffSeconds);
+    const units = [
+      ['rok', 'lata', 'lat', 31536000],
+      ['miesiąc', 'miesiące', 'miesięcy', 2592000],
+      ['dzień', 'dni', 'dni', 86400],
+      ['godzinę', 'godziny', 'godzin', 3600],
+      ['minutę', 'minuty', 'minut', 60],
+    ];
+    for (const [one, few, many, secs] of units){
+      if (abs >= secs){
+        const count = Math.round(abs / secs);
+        const word = count === 1 ? one : (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20) ? few : many);
+        return diffSeconds >= 0 ? `za ${count} ${word}` : `${count} ${word} temu`;
+      }
+    }
+    return diffSeconds >= 0 ? 'za chwilę' : 'przed chwilą';
+  }
+
   function renderDiscordMarkdown(text){
     let html = escapeHtml(text);
+    html = html.replace(/&lt;t:(\d+):([tTdDfFR])&gt;/g, (match, unix, style) => {
+      const label = formatDiscordTimestamp(parseInt(unix, 10), style);
+      return `<span class="discord-timestamp-tag" title="${escapeAttr(label)}">${escapeHtml(label)}</span>`;
+    });
     html = html.replace(/\|\|(.+?)\|\|/g, '<span class="discord-spoiler" onclick="this.classList.add(\'revealed\')">$1</span>');
     html = html.replace(/`([^`]+)`/g, '<code style="background:#1e1f22;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:0.9em;">$1</code>');
     html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<b><i>$1</i></b>');
@@ -931,6 +1030,38 @@ Event trwa do niedzieli 23:59.</textarea>
     inputEl.setSelectionRange(newPos, newPos);
   }
 
+  // Resolves the last-focused field (title/description/footer/author/field-N) back to its live
+  // <input>/<textarea> element, re-querying the DOM in case it was rebuilt since focus. Shared by
+  // both the emoji grid and the timestamp inserter so "insert at cursor" behaves identically for both.
+  function resolveLastFocusedInput(){
+    const target = state.lastFocused.target;
+    let inputEl = state.lastFocused.input;
+    if (!inputEl || !document.body.contains(inputEl)){
+      if (target === 'title') inputEl = document.getElementById('titleInput');
+      else if (target === 'description') inputEl = document.getElementById('descInput');
+      else if (target === 'footer') inputEl = document.getElementById('footerInput');
+      else if (target === 'author') inputEl = document.getElementById('authorInput');
+      else if (target && target.startsWith('field:')){
+        const [, idx, role] = target.split(':');
+        inputEl = document.querySelector(`input[data-role="${role}"][data-i="${idx}"]`);
+      }
+    }
+    if (!inputEl) inputEl = document.getElementById('titleInput');
+    return { target, inputEl };
+  }
+
+  function applyValueToState(target, newValue){
+    if (target === 'title'){ state.title = newValue; }
+    else if (target === 'description'){ state.description = newValue; }
+    else if (target === 'footer'){ state.footer = newValue; }
+    else if (target === 'author'){ state.author = newValue; }
+    else if (target && target.startsWith('field:')){
+      const [, idx, role] = target.split(':');
+      state.fields[+idx][role] = newValue;
+    }
+    renderPreview(); renderOutput();
+  }
+
   function renderEmojiGrid(){
     const grid = document.getElementById('emojiGrid');
     grid.innerHTML = '';
@@ -938,32 +1069,8 @@ Event trwa do niedzieli 23:59.</textarea>
       const btn = document.createElement('button');
       btn.textContent = e;
       btn.addEventListener('click', () => {
-        const target = state.lastFocused.target;
-        let inputEl = state.lastFocused.input;
-        // re-resolve the element in case the DOM was rebuilt since focus
-        if (!inputEl || !document.body.contains(inputEl)){
-          if (target === 'title') inputEl = document.getElementById('titleInput');
-          else if (target === 'description') inputEl = document.getElementById('descInput');
-          else if (target === 'footer') inputEl = document.getElementById('footerInput');
-          else if (target === 'author') inputEl = document.getElementById('authorInput');
-          else if (target && target.startsWith('field:')){
-            const [, idx, role] = target.split(':');
-            inputEl = document.querySelector(`input[data-role="${role}"][data-i="${idx}"]`);
-          }
-        }
-        if (!inputEl) { inputEl = document.getElementById('titleInput'); }
-
-        insertAtCursor(inputEl, e, (newValue) => {
-          if (target === 'title'){ state.title = newValue; }
-          else if (target === 'description'){ state.description = newValue; }
-          else if (target === 'footer'){ state.footer = newValue; }
-          else if (target === 'author'){ state.author = newValue; }
-          else if (target && target.startsWith('field:')){
-            const [, idx, role] = target.split(':');
-            state.fields[+idx][role] = newValue;
-          }
-          renderPreview(); renderOutput();
-        });
+        const { target, inputEl } = resolveLastFocusedInput();
+        insertAtCursor(inputEl, e, (newValue) => applyValueToState(target, newValue));
       });
       grid.appendChild(btn);
     });
@@ -1126,6 +1233,26 @@ Event trwa do niedzieli 23:59.</textarea>
     renderFieldsList(); renderPreview(); renderOutput();
   });
 
+  document.getElementById('insertTimestampBtn').addEventListener('click', () => {
+    const dateInput = document.getElementById('timestampDateInput');
+    const style = document.getElementById('timestampStyleSelect').value;
+    const hideAsSpoiler = document.getElementById('timestampSpoilerCheckbox').checked;
+    if (!dateInput.value){
+      dateInput.focus();
+      return;
+    }
+    // datetime-local gives a value with no timezone info; the browser's Date constructor
+    // interprets it as local time, which is what we want — the person picking the date sees
+    // it in their own timezone, and Discord re-renders it in each reader's timezone anyway.
+    const unixSeconds = Math.floor(new Date(dateInput.value).getTime() / 1000);
+    if (isNaN(unixSeconds)) return;
+    let tag = `<t:${unixSeconds}:${style}>`;
+    if (hideAsSpoiler) tag = `||${tag}||`;
+
+    const { target, inputEl } = resolveLastFocusedInput();
+    insertAtCursor(inputEl, tag, (newValue) => applyValueToState(target, newValue));
+  });
+
   document.getElementById('addPingEveryone').addEventListener('click', () => {
     if (state.pings.some(p => p.type === 'everyone')) return; // no duplicates
     state.pings.push({ type: 'everyone', roleId: '' });
@@ -1161,6 +1288,74 @@ Event trwa do niedzieli 23:59.</textarea>
     });
   });
 
+  // ---------- webhook: persisted URL + send ----------
+  const WEBHOOK_STORAGE_KEY = 'enchant-webhook-url:discord-broadcast';
+
+  function loadSavedWebhookUrl(){
+    try {
+      const saved = localStorage.getItem(WEBHOOK_STORAGE_KEY);
+      if (saved) document.getElementById('webhookUrlInput').value = saved;
+    } catch(e){ /* localStorage unavailable (e.g. private browsing) — ignore, field just stays empty */ }
+  }
+
+  function saveWebhookUrl(url){
+    try { localStorage.setItem(WEBHOOK_STORAGE_KEY, url); } catch(e){ /* ignore, non-critical */ }
+  }
+
+  document.getElementById('webhookUrlInput').addEventListener('input', (e) => {
+    saveWebhookUrl(e.target.value.trim());
+  });
+
+  document.getElementById('sendWebhookBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('sendWebhookBtn');
+    const hint = document.getElementById('webhookSendHint');
+    const url = document.getElementById('webhookUrlInput').value.trim();
+    const originalHintText = 'Link zapisuje się tylko w tej przeglądarce (localStorage), nigdzie indziej nie jest wysyłany. Każdy kto zna ten URL może wysyłać wiadomości na Twój kanał — nie udostępniaj go publicznie.';
+
+    if (!url){
+      hint.textContent = 'Wklej najpierw URL webhooka powyżej.';
+      hint.style.color = '#e5484d';
+      return;
+    }
+    if (!/^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//.test(url)){
+      hint.textContent = 'To nie wygląda na prawidłowy URL webhooka Discord (powinien zaczynać się od https://discord.com/api/webhooks/...).';
+      hint.style.color = '#e5484d';
+      return;
+    }
+
+    const payload = { content: buildPingContent(), embeds: [buildEmbedObject()] };
+    if (!payload.content) delete payload.content;
+
+    const originalBtnText = btn.textContent;
+    btn.textContent = 'Wysyłanie...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok){
+        hint.textContent = 'Wysłano pomyślnie!';
+        hint.style.color = '#3ba55d';
+      } else {
+        hint.textContent = `Discord odrzucił żądanie (status ${response.status}). Sprawdź czy URL webhooka jest poprawny i czy embed nie przekracza limitów.`;
+        hint.style.color = '#e5484d';
+      }
+    } catch(err){
+      hint.textContent = 'Nie udało się połączyć z Discordem — sprawdź URL webhooka i połączenie internetowe.';
+      hint.style.color = '#e5484d';
+    }
+
+    btn.textContent = originalBtnText;
+    btn.disabled = false;
+    setTimeout(() => {
+      hint.textContent = originalHintText;
+      hint.style.color = '';
+    }, 4000);
+  });
+
   // ---------- init ----------
   renderFieldsList();
   renderPingsList();
@@ -1169,6 +1364,7 @@ Event trwa do niedzieli 23:59.</textarea>
   renderColorPresets();
   renderOutput();
   bindFormatToolbars();
+  loadSavedWebhookUrl();
 })();
 </script>
 </body>
