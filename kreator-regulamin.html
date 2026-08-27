@@ -508,6 +508,18 @@
 
       <div class="panel" style="margin-top:16px;">
         <div class="panel-inner">
+          <p class="panel-title">Webhook</p>
+          <div class="field">
+            <label class="flabel">URL webhooka Discord</label>
+            <input type="text" id="webhookUrlInput" placeholder="https://discord.com/api/webhooks/...">
+          </div>
+          <button class="export-btn" id="sendWebhookBtn">Wyślij na Discord</button>
+          <div class="hint" id="webhookSendHint">Link zapisuje się tylko w tej przeglądarce (localStorage), nigdzie indziej nie jest wysyłany. Każdy kto zna ten URL może wysyłać wiadomości na Twój kanał — nie udostępniaj go publicznie.</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-inner">
           <p class="panel-title">Eksport</p>
           <div class="seg" id="outputFormatSeg">
             <button data-val="json" class="active">Webhook JSON</button>
@@ -971,12 +983,80 @@
     });
   });
 
+  // ---------- webhook: persisted URL + send ----------
+  const WEBHOOK_STORAGE_KEY = 'enchant-webhook-url:regulamin';
+
+  function loadSavedWebhookUrl(){
+    try {
+      const saved = localStorage.getItem(WEBHOOK_STORAGE_KEY);
+      if (saved) document.getElementById('webhookUrlInput').value = saved;
+    } catch(e){ /* localStorage unavailable — ignore, field just stays empty */ }
+  }
+
+  function saveWebhookUrl(url){
+    try { localStorage.setItem(WEBHOOK_STORAGE_KEY, url); } catch(e){ /* ignore, non-critical */ }
+  }
+
+  document.getElementById('webhookUrlInput').addEventListener('input', (e) => {
+    saveWebhookUrl(e.target.value.trim());
+  });
+
+  document.getElementById('sendWebhookBtn').addEventListener('click', async () => {
+    const btn = document.getElementById('sendWebhookBtn');
+    const hint = document.getElementById('webhookSendHint');
+    const url = document.getElementById('webhookUrlInput').value.trim();
+    const originalHintText = 'Link zapisuje się tylko w tej przeglądarce (localStorage), nigdzie indziej nie jest wysyłany. Każdy kto zna ten URL może wysyłać wiadomości na Twój kanał — nie udostępniaj go publicznie.';
+
+    if (!url){
+      hint.textContent = 'Wklej najpierw URL webhooka powyżej.';
+      hint.style.color = '#e5484d';
+      return;
+    }
+    if (!/^https:\/\/(discord\.com|discordapp\.com)\/api\/webhooks\//.test(url)){
+      hint.textContent = 'To nie wygląda na prawidłowy URL webhooka Discord (powinien zaczynać się od https://discord.com/api/webhooks/...).';
+      hint.style.color = '#e5484d';
+      return;
+    }
+
+    const payload = { embeds: [buildEmbedObject()] };
+
+    const originalBtnText = btn.textContent;
+    btn.textContent = 'Wysyłanie...';
+    btn.disabled = true;
+
+    try {
+      const response = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(payload),
+      });
+      if (response.ok){
+        hint.textContent = 'Wysłano pomyślnie!';
+        hint.style.color = '#3ba55d';
+      } else {
+        hint.textContent = `Discord odrzucił żądanie (status ${response.status}). Sprawdź czy URL webhooka jest poprawny i czy embed nie przekracza limitów.`;
+        hint.style.color = '#e5484d';
+      }
+    } catch(err){
+      hint.textContent = 'Nie udało się połączyć z Discordem — sprawdź URL webhooka i połączenie internetowe.';
+      hint.style.color = '#e5484d';
+    }
+
+    btn.textContent = originalBtnText;
+    btn.disabled = false;
+    setTimeout(() => {
+      hint.textContent = originalHintText;
+      hint.style.color = '';
+    }, 4000);
+  });
+
   // ---------- init ----------
   renderCategoriesList();
   renderPreview();
   renderEmojiGrid();
   renderColorPresets();
   renderOutput();
+  loadSavedWebhookUrl();
 })();
 </script>
 </body>
