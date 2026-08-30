@@ -1239,6 +1239,432 @@
       code: (p) => `set line ${p.line || '1'} of ${p.target || 'player'}'s sidebar to ${p.text || '""'}`,
     },
 
+    // ---------------- EVENTS: +10 new (combat, inventory, world) ----------------
+    on_damage: {
+      cat: 'event', container: true,
+      label: 'on damage:',
+      params: {},
+      code: () => `on damage:`,
+    },
+    on_block_break: {
+      cat: 'event', container: true,
+      label: 'on break:',
+      params: {},
+      code: () => `on break:`,
+    },
+    on_block_place: {
+      cat: 'event', container: true,
+      label: 'on place:',
+      params: {},
+      code: () => `on place:`,
+    },
+    on_item_drop: {
+      cat: 'event', container: true,
+      label: 'on drop:',
+      params: {},
+      code: () => `on drop:`,
+    },
+    on_item_pickup: {
+      cat: 'event', container: true,
+      label: 'on pickup:',
+      params: {},
+      code: () => `on pickup:`,
+    },
+    on_craft: {
+      cat: 'event', container: true,
+      label: 'on craft:',
+      params: {},
+      code: () => `on craft:`,
+    },
+    on_command_event: {
+      cat: 'event', container: true,
+      label: 'on command "{command}":',
+      params: { command: { type: 'text', default: 'test' } },
+      code: (p) => `on command "${p.command || 'test'}":`,
+    },
+    on_world_change: {
+      cat: 'event', container: true,
+      label: 'on world change:',
+      params: {},
+      code: () => `on world change:`,
+    },
+    on_teleport: {
+      cat: 'event', container: true,
+      label: 'on teleport:',
+      params: {},
+      code: () => `on teleport:`,
+    },
+    on_leaves_decay: {
+      cat: 'event', container: true,
+      label: 'on leaves decay:',
+      params: {},
+      code: () => `on leaves decay:`,
+    },
+
+    // ---------------- ACTIONS: entities / mobs / combat (+15) ----------------
+    spawn_entity: {
+      cat: 'action', container: false,
+      label: 'stwórz {entity} w {location} (dostępny potem jako "last spawned entity")',
+      params: {
+        entity: { type: 'text', default: 'a zombie' },
+        location: { type: 'text', default: "player's location" },
+      },
+      code: (p) => `spawn ${p.entity || 'a zombie'} at ${p.location || "player's location"}`,
+    },
+    set_entity_health: {
+      cat: 'action', container: false,
+      label: 'ustaw zdrowie {entity} na {amount}',
+      params: {
+        entity: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '20' },
+      },
+      code: (p) => `set ${p.entity || 'player'}'s health to ${p.amount || '20'}`,
+    },
+    damage_entity: {
+      cat: 'action', container: false,
+      label: 'zadaj {amount} obrażeń {entity}',
+      params: {
+        entity: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '2' },
+      },
+      code: (p) => `damage ${p.entity || 'player'} by ${p.amount || '2'}`,
+    },
+    set_entity_name: {
+      cat: 'action', container: false,
+      label: 'nazwij {entity} jako {name}',
+      params: {
+        entity: { type: 'text', default: 'last spawned entity' },
+        name: { type: 'text', default: '"&cBoss"' },
+      },
+      code: (p) => `set name of ${p.entity || 'last spawned entity'} to ${p.name || '""'}`,
+    },
+    remove_entity: {
+      cat: 'action', container: false,
+      label: 'usuń {entity}',
+      params: { entity: { type: 'text', default: 'event-entity' } },
+      code: (p) => `delete ${p.entity || 'event-entity'}`,
+    },
+    set_equipment: {
+      cat: 'action', container: false,
+      label: 'ustaw slot {slotType} gracza {target} na {item}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        slotType: { type: 'select', options: ['helmet', 'chestplate', 'leggings', 'boots', 'tool'], default: 'helmet' },
+        item: { type: 'text', default: 'diamond helmet' },
+      },
+      code: (p) => `set ${p.slotType || 'helmet'} of ${p.target || 'player'} to ${p.item || 'air'}`,
+    },
+    clear_inventory: {
+      cat: 'action', container: false,
+      label: 'wyczyść ekwipunek {target}',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `clear ${p.target || 'player'}'s inventory`,
+    },
+    drop_item_at: {
+      cat: 'action', container: false,
+      label: 'upuść {item} w {location}',
+      params: {
+        item: { type: 'text', default: 'diamond' },
+        location: { type: 'text', default: "player's location" },
+      },
+      code: (p) => `drop ${p.item || 'stone'} at ${p.location || "player's location"}`,
+    },
+    set_fire_ticks: {
+      cat: 'action', container: false,
+      label: 'podpal {entity} na {ticks} ticków',
+      params: {
+        entity: { type: 'text', default: 'player' },
+        ticks: { type: 'text', default: '100' },
+      },
+      code: (p) => `set ${p.entity || 'player'}'s fire ticks to ${p.ticks || '100'}`,
+    },
+    extinguish_entity: {
+      cat: 'action', container: false,
+      label: 'ugaś {entity}',
+      params: { entity: { type: 'text', default: 'player' } },
+      code: (p) => `set ${p.entity || 'player'}'s fire ticks to 0`,
+    },
+    push_entity: {
+      cat: 'action', container: false,
+      label: 'odepchnij {entity} z siłą {vector}',
+      params: {
+        entity: { type: 'text', default: 'player' },
+        vector: { type: 'text', default: 'vector(0, 1, 0)' },
+      },
+      code: (p) => `push ${p.entity || 'player'} at speed 1 in ${p.vector || 'vector(0, 1, 0)'}`,
+    },
+    set_gamemode: {
+      cat: 'action', container: false,
+      label: 'ustaw tryb gry {target} na {mode}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        mode: { type: 'select', options: ['survival', 'creative', 'adventure', 'spectator'], default: 'survival' },
+      },
+      code: (p) => `set gamemode of ${p.target || 'player'} to ${p.mode || 'survival'}`,
+    },
+    set_fly_mode: {
+      cat: 'action', container: false,
+      label: 'ustaw latanie {target} na {enabled}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        enabled: { type: 'select', options: ['włączone', 'wyłączone'], default: 'włączone' },
+      },
+      code: (p) => `set ${p.target || 'player'}'s flight mode to ${p.enabled === 'wyłączone' ? 'false' : 'true'}`,
+    },
+    set_exp: {
+      cat: 'action', container: false,
+      label: 'ustaw poziom doświadczenia {target} na {amount}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '10' },
+      },
+      code: (p) => `set ${p.target || 'player'}'s level to ${p.amount || '0'}`,
+    },
+    give_advancement: {
+      cat: 'action', container: false,
+      label: 'wykonaj komendę: nadaj osiągnięcie {advancement} graczowi {target}',
+      params: {
+        target: { type: 'text', default: '%player%' },
+        advancement: { type: 'text', default: 'minecraft:story/mine_stone' },
+      },
+      code: (p) => `execute console command "advancement grant ${p.target || '%player%'} only ${p.advancement || ''}"`,
+    },
+
+    // ---------------- VARIABLES / LISTS: +10 ----------------
+    loop_list_variable: {
+      cat: 'control', container: true,
+      label: 'dla każdego {item} z listy {list}::*:',
+      params: {
+        item: { type: 'text', default: 'loop-value' },
+        list: { type: 'text', default: 'my-list' },
+      },
+      code: (p) => `loop {${p.list || 'my-list'}::*}:`,
+    },
+    clear_list_variable: {
+      cat: 'var', container: false,
+      label: 'wyczyść całą listę {list}::*',
+      params: { list: { type: 'text', default: 'my-list' } },
+      code: (p) => `clear {${p.list || 'my-list'}::*}`,
+    },
+    add_to_list_variable: {
+      cat: 'var', container: false,
+      label: 'dodaj {value} do listy {list}::*',
+      params: {
+        list: { type: 'text', default: 'my-list' },
+        value: { type: 'text', default: '"element"' },
+      },
+      code: (p) => `add ${p.value || '""'} to {${p.list || 'my-list'}::*}`,
+    },
+    remove_from_list_variable: {
+      cat: 'var', container: false,
+      label: 'usuń {value} z listy {list}::*',
+      params: {
+        list: { type: 'text', default: 'my-list' },
+        value: { type: 'text', default: '"element"' },
+      },
+      code: (p) => `remove ${p.value || '""'} from {${p.list || 'my-list'}::*}`,
+    },
+    get_list_size: {
+      cat: 'var', container: false,
+      label: 'ustaw {var} na rozmiar listy {list}::*',
+      params: {
+        var: { type: 'text', default: '{_size}' },
+        list: { type: 'text', default: 'my-list' },
+      },
+      code: (p) => `set ${p.var || '{_size}'} to size of {${p.list || 'my-list'}::*}`,
+    },
+    get_random_from_list: {
+      cat: 'var', container: false,
+      label: 'ustaw {var} na losowy element z listy {list}::*',
+      params: {
+        var: { type: 'text', default: '{_random}' },
+        list: { type: 'text', default: 'my-list' },
+      },
+      code: (p) => `set ${p.var || '{_random}'} to a random element out of {${p.list || 'my-list'}::*}`,
+    },
+    sort_list_variable: {
+      cat: 'var', container: false,
+      label: 'posortuj listę {list}::* rosnąco',
+      params: { list: { type: 'text', default: 'my-list' } },
+      code: (p) => `sort {${p.list || 'my-list'}::*}`,
+    },
+    increment_and_check: {
+      cat: 'var', container: false,
+      label: 'zwiększ {var} o 1 (skrót: add 1 to {var})',
+      params: { var: { type: 'text', default: '{_count}' } },
+      code: (p) => `add 1 to ${p.var || '{_count}'}`,
+    },
+    round_number_var: {
+      cat: 'var', container: false,
+      label: 'zaokrąglij {value}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_rounded}' },
+        value: { type: 'text', default: '{_number}' },
+      },
+      code: (p) => `set ${p.var || '{_rounded}'} to rounded ${p.value || '{_number}'}`,
+    },
+    parse_number_var: {
+      cat: 'var', container: false,
+      label: 'przekonwertuj {text} na liczbę, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_number}' },
+        text: { type: 'text', default: '"%arg-1%"' },
+      },
+      code: (p) => `set ${p.var || '{_number}'} to ${p.text || '""'} parsed as number`,
+    },
+    concat_strings: {
+      cat: 'var', container: false,
+      label: 'połącz {text1} i {text2}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_result}' },
+        text1: { type: 'text', default: '"Cześć "' },
+        text2: { type: 'text', default: 'player\'s name' },
+      },
+      code: (p) => `set ${p.var || '{_result}'} to (${p.text1 || '""'} and ${p.text2 || '""'})`,
+    },
+
+    // ---------------- TEXT / FORMATTING (+8) ----------------
+    replace_in_text: {
+      cat: 'var', container: false,
+      label: 'zamień w {text}: {old} na {new}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_result}' },
+        text: { type: 'text', default: '"%message%"' },
+        old: { type: 'text', default: '"&"' },
+        new: { type: 'text', default: '""' },
+      },
+      code: (p) => `replace ${p.old || '""'} with ${p.new || '""'} in ${p.text || '""'} and set ${p.var || '{_result}'} to it`,
+    },
+    text_contains_check: {
+      cat: 'var', container: false,
+      label: 'sprawdź czy {text} zawiera {substring}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_contains}' },
+        text: { type: 'text', default: '"%message%"' },
+        substring: { type: 'text', default: '"słowo"' },
+      },
+      code: (p) => `set ${p.var || '{_contains}'} to (${p.text || '""'} contains ${p.substring || '""'})`,
+    },
+    uppercase_text: {
+      cat: 'var', container: false,
+      label: 'zamień {text} na wielkie litery, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_result}' },
+        text: { type: 'text', default: '"%message%"' },
+      },
+      code: (p) => `set ${p.var || '{_result}'} to uppercase ${p.text || '""'}`,
+    },
+    lowercase_text: {
+      cat: 'var', container: false,
+      label: 'zamień {text} na małe litery, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_result}' },
+        text: { type: 'text', default: '"%message%"' },
+      },
+      code: (p) => `set ${p.var || '{_result}'} to lowercase ${p.text || '""'}`,
+    },
+    format_colored_text: {
+      cat: 'var', container: false,
+      label: 'sformatuj kolory w {text}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_formatted}' },
+        text: { type: 'text', default: '"&aTekst"' },
+      },
+      code: (p) => `set ${p.var || '{_formatted}'} to colored ${p.text || '""'}`,
+    },
+    strip_colors_text: {
+      cat: 'var', container: false,
+      label: 'usuń kolory z {text}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_stripped}' },
+        text: { type: 'text', default: '"%message%"' },
+      },
+      code: (p) => `set ${p.var || '{_stripped}'} to uncolored ${p.text || '""'}`,
+    },
+    substring_text: {
+      cat: 'var', container: false,
+      label: 'wytnij z {text} znaki od {start} do {end}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_part}' },
+        text: { type: 'text', default: '"%message%"' },
+        start: { type: 'text', default: '1' },
+        end: { type: 'text', default: '5' },
+      },
+      code: (p) => `set ${p.var || '{_part}'} to characters from ${p.start || '1'} to ${p.end || '5'} of ${p.text || '""'}`,
+    },
+    format_time_duration: {
+      cat: 'var', container: false,
+      label: 'sformatuj czas {duration}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_formatted}' },
+        duration: { type: 'text', default: 'difference between now and {start}' },
+      },
+      code: (p) => `set ${p.var || '{_formatted}'} to ${p.duration || '0 seconds'}`,
+    },
+
+    // ---------------- INTEGRATIONS: Vault / WorldGuard / LuckPerms / misc (+7) ----------------
+    check_vault_balance: {
+      cat: 'action', container: false,
+      label: 'sprawdź saldo {target} (Vault), wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_balance}' },
+        target: { type: 'text', default: 'player' },
+      },
+      code: (p) => `set ${p.var || '{_balance}'} to ${p.target || 'player'}'s balance`,
+    },
+    add_vault_balance: {
+      cat: 'action', container: false,
+      label: 'dodaj {amount} do salda {target} (Vault)',
+      params: {
+        target: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '100' },
+      },
+      code: (p) => `add ${p.amount || '0'} to ${p.target || 'player'}'s balance`,
+    },
+    remove_vault_balance: {
+      cat: 'action', container: false,
+      label: 'odejmij {amount} od salda {target} (Vault)',
+      params: {
+        target: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '100' },
+      },
+      code: (p) => `remove ${p.amount || '0'} from ${p.target || 'player'}'s balance`,
+    },
+    check_worldguard_region: {
+      cat: 'action', container: false,
+      label: 'wykonaj komendę: sprawdź region WorldGuard w {location}',
+      params: { location: { type: 'text', default: "player's location" } },
+      code: (p) => `execute console command "rg info -l ${p.location || "player's location"}"`,
+    },
+    revoke_luckperms_group: {
+      cat: 'action', container: false,
+      label: 'odbierz graczowi {target} grupę {group} (LuckPerms)',
+      params: {
+        target: { type: 'text', default: '%player%' },
+        group: { type: 'text', default: 'vip' },
+      },
+      code: (p) => `execute console command "lp user ${p.target || '%player%'} parent remove ${p.group || 'default'}"`,
+    },
+    check_placeholder_api: {
+      cat: 'action', container: false,
+      label: 'pobierz PlaceholderAPI {placeholder} dla {target}, wynik do {var}',
+      params: {
+        var: { type: 'text', default: '{_value}' },
+        target: { type: 'text', default: 'player' },
+        placeholder: { type: 'text', default: '"%vault_eco_balance%"' },
+      },
+      code: (p) => `set ${p.var || '{_value}'} to ${p.placeholder || '""'} parsed for ${p.target || 'player'}`,
+    },
+    log_to_file: {
+      cat: 'action', container: false,
+      label: 'zapisz {text} do logu {filename}',
+      params: {
+        filename: { type: 'text', default: '"logs/custom.log"' },
+        text: { type: 'text', default: '"%now% - %player% zrobił coś"' },
+      },
+      code: (p) => `write ${p.text || '""'} to file ${p.filename || '""'}`,
+    },
+
     // ---------------- MISC ----------------
     comment: {
       cat: 'misc', container: false,
