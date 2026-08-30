@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kreator Regulaminu — Enchant</title>
+<title>Kreator FAQ — Enchant</title>
 <style>
   :root {
     --bg-0: #0a0a0c;
@@ -453,8 +453,8 @@
   <header>
     <div class="tag"></div>
     <div>
-      <h1>Kreator Regulaminu</h1>
-      <div class="sub">kategorie · punkty · kary · Discord embed 1:1</div>
+      <h1>Kreator FAQ</h1>
+      <div class="sub">pytania i odpowiedzi · kategorie · Discord embed 1:1</div>
     </div>
   </header>
 
@@ -549,11 +549,11 @@
           </div>
           <div class="field">
             <label class="flabel">Tytuł</label>
-            <input type="text" id="titleInput" value="📜 Regulamin Serwera Enchant SMP" maxlength="256">
+            <input type="text" id="titleInput" value="❓ Najczęściej zadawane pytania" maxlength="256">
           </div>
           <div class="field">
             <label class="flabel">Opis</label>
-            <textarea id="descInput" maxlength="4096">Przed rozpoczęciem gry zapoznaj się z poniższymi zasadami. Ich nieprzestrzeganie skutkuje karami opisanymi przy każdym punkcie.</textarea>
+            <textarea id="descInput" maxlength="4096">Odpowiedzi na najczęstsze pytania graczy Enchant SMP.</textarea>
           </div>
           <div class="field">
             <label class="flabel">Stopka (footer)</label>
@@ -579,10 +579,10 @@
 
       <div class="panel" style="margin-top:16px;">
         <div class="panel-inner">
-          <p class="panel-title">Kategorie</p>
+          <p class="panel-title">Kategorie FAQ</p>
           <div class="categories-list" id="categoriesList"></div>
           <button class="add-btn" id="addCategoryBtn">+ Dodaj kategorię</button>
-          <div class="hint">Każda kategoria (np. "Czat", "Budowanie", "PvP") staje się jednym polem embeda. Punkty w środku numerują się automatycznie, kara pokazuje się przy punkcie jeśli ją wpiszesz.</div>
+          <div class="hint">Każda kategoria (np. "💰 Płatności", "🎮 Rozgrywka") staje się jednym polem embeda. Pytania w środku wyświetlają się pogrubione, z odpowiedzią pod spodem.</div>
         </div>
       </div>
 
@@ -603,24 +603,24 @@
   const state = {
     botName: 'Enchant SMP',
     author: '',
-    title: '📜 Regulamin Serwera Enchant SMP',
-    description: 'Przed rozpoczęciem gry zapoznaj się z poniższymi zasadami. Ich nieprzestrzeganie skutkuje karami opisanymi przy każdym punkcie.',
+    title: '❓ Najczęściej zadawane pytania',
+    description: 'Odpowiedzi na najczęstsze pytania graczy Enchant SMP.',
     footer: 'Enchant SMP • play.enchantsmp.pl',
     imageUrl: '',
     color: '#2f6bff',
     categories: [
       {
-        name: '💬 Czat',
+        name: '💰 Płatności i sklep',
         rules: [
-          { text: 'Zakaz spamu i floodowania czatu', punishment: 'Mute 30 min' },
-          { text: 'Zakaz wulgaryzmów i obrażania innych graczy', punishment: 'Mute 1h / Ban' },
+          { question: 'Jak kupić rangę VIP?', answer: 'Wejdź na sklep.enchantsmp.pl, wybierz rangę i zapłać przez Tpay lub PayPal.' },
+          { question: 'Czy mogę dostać zwrot?', answer: 'Tak, w ciągu 14 dni od zakupu — napisz zgłoszenie na Discordzie w kanale #pomoc.' },
         ]
       },
       {
-        name: '⚔ PvP',
+        name: '🎮 Rozgrywka',
         rules: [
-          { text: 'Zakaz walki w strefach bezpiecznych (spawn, /warp)', punishment: 'Ostrzeżenie' },
-          { text: 'Zakaz używania niedozwolonych modyfikacji (X-Ray, Kill Aura)', punishment: 'Ban permanentny' },
+          { question: 'Jak dołączyć do serwera?', answer: 'Wpisz adres play.enchantsmp.pl w Minecraft i kliknij dołącz.' },
+          { question: 'Czy jest whitelist?', answer: 'Nie, serwer jest otwarty dla wszystkich.' },
         ]
       }
     ],
@@ -628,7 +628,7 @@
     lastFocused: { target: 'title', input: null },
   };
 
-  const EMOJIS = ['📜','⚖','🛡','🔨','⚠','🚫','✅','❌','💬','⚔','🏗','💰','👑','🔥','⭐','☠','📌','🕐','♫','☯'];
+  const EMOJIS = ['❓','💬','📌','✅','❌','💰','🎮','🛡','⚙','📦','🎁','⭐','🔥','💎','📝','⚠','🔒','🕐','☯','♫'];
 
   const COLOR_PRESETS = {
     'Blurple': '#5865F2',
@@ -669,16 +669,16 @@
     document.getElementById('embedDesc').textContent = state.description;
     document.getElementById('embedDesc').style.display = state.description.trim() ? 'block' : 'none';
 
-    // categories -> one embed field per category, numbered rule lines with punishments
+    // categories -> one embed field per category, each item is a bolded question with its answer below
     const fieldsEl = document.getElementById('embedFields');
     fieldsEl.innerHTML = '';
     state.categories.forEach(cat => {
-      const validRules = cat.rules.filter(r => r.text.trim());
+      const validRules = cat.rules.filter(r => r.question.trim());
       if (!cat.name.trim() && !validRules.length) return;
-      const valueText = validRules.map((r, i) => {
-        const punishmentPart = r.punishment.trim() ? ` — *${r.punishment}*` : '';
-        return `**${i+1}.** ${r.text}${punishmentPart}`;
-      }).join('\n');
+      const valueText = validRules.map(r => {
+        const answerPart = r.answer.trim() ? `\n${r.answer}` : '';
+        return `**${r.question}**${answerPart}`;
+      }).join('\n\n');
       const div = document.createElement('div');
       div.className = 'discord-embed-field';
       div.innerHTML = `<div class="discord-embed-field-name">${escapeHtml(cat.name)}</div><div class="discord-embed-field-value">${renderInlineMarkdown(valueText)}</div>`;
@@ -702,7 +702,7 @@
     }
 
     const rulesCharCount = state.categories.reduce((sum, cat) =>
-      sum + cat.name.length + cat.rules.reduce((s,r) => s + r.text.length + r.punishment.length, 0), 0);
+      sum + cat.name.length + cat.rules.reduce((s,r) => s + r.question.length + r.answer.length, 0), 0);
     const totalChars = (state.title||'').length + (state.description||'').length + (state.footer||'').length + rulesCharCount;
     document.getElementById('charCountLabel').textContent = `${totalChars} / 6000 znaków (limit Discorda)`;
   }
@@ -725,11 +725,11 @@
       card.className = 'category-card';
       card.innerHTML = `
         <div class="cat-name-row">
-          <input type="text" class="cat-name" data-ci="${ci}" data-role="catname" value="${escapeAttr(cat.name)}" placeholder="Nazwa kategorii (np. 💬 Czat)">
+          <input type="text" class="cat-name" data-ci="${ci}" data-role="catname" value="${escapeAttr(cat.name)}" placeholder="Nazwa kategorii (np. 💰 Płatności)">
           <button class="btn-mini rm-cat" data-ci="${ci}" title="Usuń kategorię">×</button>
         </div>
         <div class="rule-items" id="ruleItems-${ci}"></div>
-        <button class="add-rule-btn" data-ci="${ci}">+ Dodaj punkt</button>
+        <button class="add-rule-btn" data-ci="${ci}">+ Dodaj pytanie</button>
       `;
       list.appendChild(card);
 
@@ -737,10 +737,14 @@
       cat.rules.forEach((r, ri) => {
         const row = document.createElement('div');
         row.className = 'rule-item-row';
+        row.style.flexDirection = 'column';
+        row.style.alignItems = 'stretch';
         row.innerHTML = `
-          <input type="text" class="rule-text" data-ci="${ci}" data-ri="${ri}" data-role="text" value="${escapeAttr(r.text)}" placeholder="Treść punktu">
-          <input type="text" class="rule-punishment" data-ci="${ci}" data-ri="${ri}" data-role="punishment" value="${escapeAttr(r.punishment)}" placeholder="Kara (np. Mute 1h)">
-          <button class="btn-mini rm-rule" data-ci="${ci}" data-ri="${ri}" title="Usuń punkt">×</button>
+          <div style="display:flex; gap:6px; align-items:center;">
+            <input type="text" class="rule-question" data-ci="${ci}" data-ri="${ri}" data-role="question" value="${escapeAttr(r.question)}" placeholder="Pytanie" style="flex:1; font-weight:600;">
+            <button class="btn-mini rm-rule" data-ci="${ci}" data-ri="${ri}" title="Usuń">×</button>
+          </div>
+          <input type="text" class="rule-answer" data-ci="${ci}" data-ri="${ri}" data-role="answer" value="${escapeAttr(r.answer)}" placeholder="Odpowiedź" style="margin-top:6px;">
         `;
         ruleItemsEl.appendChild(row);
       });
@@ -757,7 +761,7 @@
       ['click','keyup'].forEach(ev => inp.addEventListener(ev, () => { state.lastFocused = { target: 'catname:' + inp.dataset.ci, input: inp }; }));
     });
 
-    list.querySelectorAll('input[data-role="text"], input[data-role="punishment"]').forEach(inp => {
+    list.querySelectorAll('input[data-role="question"], input[data-role="answer"]').forEach(inp => {
       inp.addEventListener('input', () => {
         const ci = +inp.dataset.ci, ri = +inp.dataset.ri, role = inp.dataset.role;
         state.categories[ci].rules[ri][role] = inp.value;
@@ -786,7 +790,7 @@
     });
     list.querySelectorAll('.add-rule-btn').forEach(btn => {
       btn.addEventListener('click', () => {
-        state.categories[+btn.dataset.ci].rules.push({ text: '', punishment: '' });
+        state.categories[+btn.dataset.ci].rules.push({ question: '', answer: '' });
         renderCategoriesList(); renderPreview(); renderOutput();
       });
     });
@@ -875,10 +879,10 @@
   }
 
   function categoryToFieldValue(cat){
-    return cat.rules.filter(r => r.text.trim()).map((r, i) => {
-      const punishmentPart = r.punishment.trim() ? ` — *${r.punishment}*` : '';
-      return `**${i+1}.** ${r.text}${punishmentPart}`;
-    }).join('\n');
+    return cat.rules.filter(r => r.question.trim()).map(r => {
+      const answerPart = r.answer.trim() ? `\n${r.answer}` : '';
+      return `**${r.question}**${answerPart}`;
+    }).join('\n\n');
   }
 
   function buildEmbedObject(){
@@ -887,7 +891,7 @@
     if (state.title.trim()) embed.title = state.title;
     if (state.description.trim()) embed.description = state.description;
     embed.color = hexToDecimal(state.color);
-    const validCategories = state.categories.filter(cat => cat.name.trim() && cat.rules.some(r => r.text.trim()));
+    const validCategories = state.categories.filter(cat => cat.name.trim() && cat.rules.some(r => r.question.trim()));
     if (validCategories.length) embed.fields = validCategories.map(cat => ({ name: cat.name, value: categoryToFieldValue(cat), inline: false }));
     if (state.imageUrl.trim()) embed.image = { url: state.imageUrl };
     if (state.footer.trim()) embed.footer = { text: state.footer };
@@ -905,7 +909,7 @@
     if (state.title.trim()) out += '**' + state.title + '**\n\n';
     if (state.description.trim()) out += state.description + '\n\n';
     state.categories.forEach(cat => {
-      const validRules = cat.rules.filter(r => r.text.trim());
+      const validRules = cat.rules.filter(r => r.question.trim());
       if (!cat.name.trim() && !validRules.length) return;
       out += '**' + cat.name + '**\n' + categoryToFieldValue(cat) + '\n\n';
     });
@@ -960,7 +964,7 @@
 
   document.getElementById('addCategoryBtn').addEventListener('click', () => {
     if (state.categories.length >= 25) return;
-    state.categories.push({ name: '', rules: [{ text: '', punishment: '' }] });
+    state.categories.push({ name: '', rules: [{ question: '', answer: '' }] });
     renderCategoriesList(); renderPreview(); renderOutput();
   });
 
@@ -1019,7 +1023,7 @@
   });
 
   // ---------- webhook: persisted URL + send ----------
-  const WEBHOOK_STORAGE_KEY = 'enchant-webhook-url:regulamin';
+  const WEBHOOK_STORAGE_KEY = 'enchant-webhook-url:faq';
 
   function loadSavedWebhookUrl(){
     try {

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kreator Regulaminu — Enchant</title>
+<title>Kreator Rankingu — Enchant</title>
 <style>
   :root {
     --bg-0: #0a0a0c;
@@ -136,6 +136,54 @@
   }
   .discord-timestamp { color: #949ba4; font-size: 11.5px; }
 
+  .discord-content-line {
+    font-size: 14px;
+    color: #dbdee1;
+    margin-bottom: 6px;
+    line-height: 1.35;
+  }
+  .discord-mention {
+    background: rgba(88,101,242,0.3);
+    color: #c9cdfb;
+    padding: 0 2px;
+    border-radius: 3px;
+    font-weight: 500;
+  }
+  .discord-timestamp-tag {
+    background: rgba(88,101,242,0.12);
+    color: #dbdee1;
+    padding: 0 2px;
+    border-radius: 3px;
+    cursor: default;
+  }
+  .discord-spoiler {
+    background: #1e1f22;
+    color: transparent;
+    border-radius: 3px;
+    cursor: pointer;
+    padding: 0 2px;
+    transition: color 0.05s ease;
+  }
+  .discord-spoiler .discord-mention {
+    background: transparent;
+    color: inherit;
+  }
+  .discord-spoiler .discord-timestamp-tag {
+    background: transparent;
+    color: inherit;
+  }
+  .discord-spoiler.revealed {
+    background: #3a3c43;
+    color: inherit;
+  }
+  .discord-spoiler.revealed .discord-mention {
+    background: rgba(88,101,242,0.3);
+    color: #c9cdfb;
+  }
+  .discord-spoiler.revealed .discord-timestamp-tag {
+    background: rgba(88,101,242,0.12);
+    color: #dbdee1;
+  }
   .discord-embed {
     display: flex;
     border-radius: 4px;
@@ -249,6 +297,32 @@
     color: var(--text-dim);
     margin-bottom: 7px;
   }
+  .format-toolbar {
+    display: flex;
+    gap: 4px;
+    margin-bottom: 6px;
+  }
+  .format-toolbar button {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text-dim);
+    width: 28px;
+    height: 26px;
+    font-family: inherit;
+    font-size: 12.5px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+  }
+  .format-toolbar button:hover { border-color: var(--accent); color: var(--text); background: var(--bg-2); }
+  .format-toolbar button.b { font-weight: 800; }
+  .format-toolbar button.i { font-style: italic; font-weight: 600; }
+  .format-toolbar button.u { text-decoration: underline; font-weight: 600; }
+  .format-toolbar button.s { text-decoration: line-through; font-weight: 600; }
+  .format-toolbar button.code { font-family: 'Courier New', monospace; font-size: 11px; }
+  .format-toolbar button.spoiler { font-size: 10px; letter-spacing: -0.5px; }
   input[type=text], textarea, select {
     width: 100%;
     background: var(--bg-1);
@@ -310,47 +384,41 @@
     flex-shrink: 0;
   }
 
-  .categories-list { display: flex; flex-direction: column; gap: 12px; }
-  .category-card {
+  .fields-list { display: flex; flex-direction: column; gap: 10px; }
+  .field-row {
     background: var(--bg-1);
     border: 1px solid var(--line);
     border-radius: 8px;
     padding: 10px;
   }
-  .category-card .cat-name-row {
+  .field-row .field-row-top {
     display: flex;
     gap: 6px;
-    margin-bottom: 10px;
+    margin-bottom: 6px;
   }
-  .category-card input[type=text] {
+  .field-row input[type=text] {
     background: var(--bg-2);
     border: 1px solid var(--line);
     border-radius: 6px;
     padding: 7px 9px;
     font-size: 12.5px;
   }
-  .category-card .cat-name { flex: 1; font-weight: 600; }
-  .rule-items { display: flex; flex-direction: column; gap: 6px; }
-  .rule-item-row {
+  .field-row .fname { flex: 1; }
+  .field-row .fvalue { width: 100%; margin-top: 6px; }
+  .field-row-bottom {
     display: flex;
-    gap: 6px;
     align-items: center;
+    justify-content: space-between;
+    margin-top: 6px;
   }
-  .rule-item-row .rule-text { flex: 2; }
-  .rule-item-row .rule-punishment { flex: 1; }
-  .add-rule-btn {
-    background: none;
-    border: 1px dashed var(--line-bright);
-    border-radius: 6px;
-    color: var(--text-dim);
-    padding: 6px;
+  .field-row-bottom label {
+    display: flex;
+    align-items: center;
+    gap: 6px;
     font-size: 11px;
-    font-family: inherit;
-    cursor: pointer;
-    margin-top: 8px;
-    width: 100%;
+    color: var(--text-dim);
   }
-  .add-rule-btn:hover { border-color: var(--accent); color: var(--accent); }
+  .field-row-bottom input[type=checkbox] { accent-color: var(--accent); cursor: pointer; }
   .btn-mini {
     background: none;
     border: 1px solid var(--line);
@@ -453,8 +521,8 @@
   <header>
     <div class="tag"></div>
     <div>
-      <h1>Kreator Regulaminu</h1>
-      <div class="sub">kategorie · punkty · kary · Discord embed 1:1</div>
+      <h1>Kreator Rankingu</h1>
+      <div class="sub">top 10 · miejsca 🥇🥈🥉 · Discord embed 1:1</div>
     </div>
   </header>
 
@@ -475,6 +543,8 @@
                   <span class="discord-bot-tag">BOT</span>
                   <span class="discord-timestamp">Dzisiaj o 12:00</span>
                 </div>
+
+                <div class="discord-content-line" id="contentLineRow" style="display:none;"></div>
 
                 <div class="discord-embed" id="discordEmbed">
                   <div class="discord-embed-bar" id="embedBar"></div>
@@ -537,6 +607,22 @@
 
       <div class="panel">
         <div class="panel-inner">
+          <p class="panel-title">Ping</p>
+          <div class="field">
+            <label class="flabel">Wzmianki nad ogłoszeniem (opcjonalnie, można dodać kilka)</label>
+            <div class="stops" id="pingsList"></div>
+            <div class="preset-row" style="margin-top:10px;">
+              <button id="addPingEveryone" type="button">+ @everyone</button>
+              <button id="addPingHere" type="button">+ @here</button>
+              <button id="addPingRole" type="button">+ Rola</button>
+            </div>
+          </div>
+          <div class="hint">Discord wymaga prawdziwego ID roli w treści wiadomości (np. <code>&lt;@&amp;123456789012345678&gt;</code>), żeby ping faktycznie zadziałał — samo wpisanie nazwy roli w embedzie nikogo nie powiadomi. ID roli skopiujesz z Discorda: włącz tryb dewelopera (Ustawienia → Zaawansowane), potem PPM na rolę → Kopiuj ID.</div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-inner">
           <p class="panel-title">Treść</p>
 
           <div class="field">
@@ -545,18 +631,50 @@
           </div>
           <div class="field">
             <label class="flabel">Autor (mała linia nad tytułem, opcjonalnie)</label>
+            <div class="format-toolbar" data-target="authorInput">
+              <button class="b" data-fmt="bold" title="Pogrubienie">B</button>
+              <button class="i" data-fmt="italic" title="Kursywa">I</button>
+              <button class="u" data-fmt="underline" title="Podkreślenie">U</button>
+              <button class="s" data-fmt="strike" title="Przekreślenie">S</button>
+              <button class="code" data-fmt="code" title="Kod">&lt;/&gt;</button>
+              <button class="spoiler" data-fmt="spoiler" title="Spoiler (ukryj tekst)">||•||</button>
+            </div>
             <input type="text" id="authorInput" value="" maxlength="256">
           </div>
           <div class="field">
             <label class="flabel">Tytuł</label>
-            <input type="text" id="titleInput" value="📜 Regulamin Serwera Enchant SMP" maxlength="256">
+            <div class="format-toolbar" data-target="titleInput">
+              <button class="b" data-fmt="bold" title="Pogrubienie">B</button>
+              <button class="i" data-fmt="italic" title="Kursywa">I</button>
+              <button class="u" data-fmt="underline" title="Podkreślenie">U</button>
+              <button class="s" data-fmt="strike" title="Przekreślenie">S</button>
+              <button class="code" data-fmt="code" title="Kod">&lt;/&gt;</button>
+              <button class="spoiler" data-fmt="spoiler" title="Spoiler (ukryj tekst)">||•||</button>
+            </div>
+            <input type="text" id="titleInput" value="🏆 Top 10 — Najlepsi Gracze" maxlength="256">
           </div>
           <div class="field">
             <label class="flabel">Opis</label>
-            <textarea id="descInput" maxlength="4096">Przed rozpoczęciem gry zapoznaj się z poniższymi zasadami. Ich nieprzestrzeganie skutkuje karami opisanymi przy każdym punkcie.</textarea>
+            <div class="format-toolbar" data-target="descInput">
+              <button class="b" data-fmt="bold" title="Pogrubienie">B</button>
+              <button class="i" data-fmt="italic" title="Kursywa">I</button>
+              <button class="u" data-fmt="underline" title="Podkreślenie">U</button>
+              <button class="s" data-fmt="strike" title="Przekreślenie">S</button>
+              <button class="code" data-fmt="code" title="Kod">&lt;/&gt;</button>
+              <button class="spoiler" data-fmt="spoiler" title="Spoiler (ukryj tekst)">||•||</button>
+            </div>
+            <textarea id="descInput" maxlength="4096">Ranking najlepszych graczy Enchant SMP tego tygodnia.</textarea>
           </div>
           <div class="field">
             <label class="flabel">Stopka (footer)</label>
+            <div class="format-toolbar" data-target="footerInput">
+              <button class="b" data-fmt="bold" title="Pogrubienie">B</button>
+              <button class="i" data-fmt="italic" title="Kursywa">I</button>
+              <button class="u" data-fmt="underline" title="Podkreślenie">U</button>
+              <button class="s" data-fmt="strike" title="Przekreślenie">S</button>
+              <button class="code" data-fmt="code" title="Kod">&lt;/&gt;</button>
+              <button class="spoiler" data-fmt="spoiler" title="Spoiler (ukryj tekst)">||•||</button>
+            </div>
             <input type="text" id="footerInput" value="Enchant SMP • play.enchantsmp.pl" maxlength="2048">
           </div>
           <div class="field">
@@ -570,8 +688,8 @@
         <div class="panel-inner">
           <p class="panel-title">Kolor paska embeda</p>
           <div class="color-swatch-row">
-            <input type="color" id="embedColorPicker" value="#2f6bff">
-            <input type="text" id="embedColorHex" value="#2f6bff" maxlength="7">
+            <input type="color" id="embedColorPicker" value="#f0b132">
+            <input type="text" id="embedColorHex" value="#f0b132" maxlength="7">
           </div>
           <div class="preset-row" id="colorPresetsGrid"></div>
         </div>
@@ -579,18 +697,52 @@
 
       <div class="panel" style="margin-top:16px;">
         <div class="panel-inner">
-          <p class="panel-title">Kategorie</p>
-          <div class="categories-list" id="categoriesList"></div>
-          <button class="add-btn" id="addCategoryBtn">+ Dodaj kategorię</button>
-          <div class="hint">Każda kategoria (np. "Czat", "Budowanie", "PvP") staje się jednym polem embeda. Punkty w środku numerują się automatycznie, kara pokazuje się przy punkcie jeśli ją wpiszesz.</div>
+          <p class="panel-title">Ranking (Top 10)</p>
+          <div class="field">
+            <label class="flabel">Etykieta statystyki (np. Zabójstwa, Bloki, Czas gry)</label>
+            <input type="text" id="statLabelInput" value="Zabójstwa" maxlength="32">
+          </div>
+          <div class="fields-list" id="entriesList"></div>
+          <button class="add-btn" id="addEntryBtn">+ Dodaj gracza</button>
+          <div class="hint">Miejsca 1-3 dostają automatycznie medale 🥇🥈🥉, reszta numeruje się zwykłymi liczbami. Kolejność na liście = kolejność w rankingu.</div>
         </div>
       </div>
 
       <div class="panel" style="margin-top:16px;">
         <div class="panel-inner">
           <p class="panel-title">Emotki</p>
-          <div class="hint" style="margin-top:0;margin-bottom:10px;">Wstawiają się w miejscu kursora w ostatnio zaznaczonym polu (tytuł, opis, stopka, nazwa kategorii lub punkt).</div>
+          <div class="hint" style="margin-top:0;margin-bottom:10px;">Wstawiają się w miejscu kursora w ostatnio zaznaczonym polu (tytuł, opis, stopka lub pole).</div>
           <div class="emoji-grid" id="emojiGrid"></div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-inner">
+          <p class="panel-title">Odliczanie czasu</p>
+          <div class="field">
+            <label class="flabel">Data i godzina</label>
+            <input type="datetime-local" id="timestampDateInput">
+          </div>
+          <div class="field">
+            <label class="flabel">Styl wyświetlania</label>
+            <select id="timestampStyleSelect">
+              <option value="R" selected>Względny — „za 2 godziny” (aktualizuje się na żywo)</option>
+              <option value="f">Krótka data i godzina — „6 marca 2026 16:20”</option>
+              <option value="F">Pełna data i godzina — „piątek, 6 marca 2026 16:20”</option>
+              <option value="d">Krótka data — „06.03.2026”</option>
+              <option value="D">Pełna data — „6 marca 2026”</option>
+              <option value="t">Krótki czas — „16:20”</option>
+              <option value="T">Długi czas — „16:20:00”</option>
+            </select>
+          </div>
+          <div class="field">
+            <label style="display:flex;align-items:center;gap:8px;font-size:12.5px;color:var(--text-dim);cursor:pointer;">
+              <input type="checkbox" id="timestampSpoilerCheckbox" style="accent-color:var(--accent);cursor:pointer;">
+              Ukryj pod spoilerem (||czas||)
+            </label>
+          </div>
+          <button class="add-btn" id="insertTimestampBtn">Wstaw w miejscu kursora</button>
+          <div class="hint">Wstawia się dokładnie tak jak emotki — kliknij najpierw w polu (tytuł, opis, stopka lub pole), gdzie ma się pojawić, potem wybierz datę i naciśnij wstaw. Discord pokaże każdemu czytającemu czas w jego własnej strefie czasowej.</div>
         </div>
       </div>
 
@@ -603,32 +755,27 @@
   const state = {
     botName: 'Enchant SMP',
     author: '',
-    title: '📜 Regulamin Serwera Enchant SMP',
-    description: 'Przed rozpoczęciem gry zapoznaj się z poniższymi zasadami. Ich nieprzestrzeganie skutkuje karami opisanymi przy każdym punkcie.',
+    title: '🏆 Top 10 — Najlepsi Gracze',
+    description: 'Ranking najlepszych graczy Enchant SMP tego tygodnia.',
     footer: 'Enchant SMP • play.enchantsmp.pl',
     imageUrl: '',
-    color: '#2f6bff',
-    categories: [
-      {
-        name: '💬 Czat',
-        rules: [
-          { text: 'Zakaz spamu i floodowania czatu', punishment: 'Mute 30 min' },
-          { text: 'Zakaz wulgaryzmów i obrażania innych graczy', punishment: 'Mute 1h / Ban' },
-        ]
-      },
-      {
-        name: '⚔ PvP',
-        rules: [
-          { text: 'Zakaz walki w strefach bezpiecznych (spawn, /warp)', punishment: 'Ostrzeżenie' },
-          { text: 'Zakaz używania niedozwolonych modyfikacji (X-Ray, Kill Aura)', punishment: 'Ban permanentny' },
-        ]
-      }
+    color: '#f0b132',
+    statLabel: 'Zabójstwa',
+    entries: [
+      { player: 'michxgaming', stat: '1204' },
+      { player: 'Steve123', stat: '987' },
+      { player: 'Alexandra', stat: '875' },
+      { player: 'Notch_Fan', stat: '642' },
+      { player: 'Budowniczy', stat: '598' },
     ],
     outputFormat: 'json',
     lastFocused: { target: 'title', input: null },
+    pings: [], // array of { type: 'everyone' | 'here' | 'role', roleId: '' }
   };
 
-  const EMOJIS = ['📜','⚖','🛡','🔨','⚠','🚫','✅','❌','💬','⚔','🏗','💰','👑','🔥','⭐','☠','📌','🕐','♫','☯'];
+  const MEDALS = ['🥇', '🥈', '🥉'];
+
+  const EMOJIS = ['🏆','🥇','🥈','🥉','⚔','💰','🧱','🕐','⭐','🔥','💎','🎮','✅','❌','⚡','📌','👑','🌟','☯','♫'];
 
   const COLOR_PRESETS = {
     'Blurple': '#5865F2',
@@ -648,8 +795,135 @@
     return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
   }
 
+  // Renders a small subset of Discord's Markdown for the preview: bold, italic, underline,
+  // strikethrough, inline code. Applied in an order that avoids ** being partially consumed by *.
+  // Formats a Discord <t:UNIX:STYLE> tag into the human-readable text Discord would show,
+  // using the browser's own locale-aware date formatting. R (relative) gets special handling
+  // since it's not a fixed calendar format but a live "in X / X ago" computed against now.
+  function formatDiscordTimestamp(unixSeconds, style){
+    const date = new Date(unixSeconds * 1000);
+    if (style === 'R') return formatRelativeTime(unixSeconds);
+    const optionsByStyle = {
+      t: { hour: '2-digit', minute: '2-digit' },
+      T: { hour: '2-digit', minute: '2-digit', second: '2-digit' },
+      d: { day: '2-digit', month: '2-digit', year: 'numeric' },
+      D: { day: 'numeric', month: 'long', year: 'numeric' },
+      f: { day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' },
+      F: { weekday: 'long', day: 'numeric', month: 'long', year: 'numeric', hour: '2-digit', minute: '2-digit' },
+    };
+    const opts = optionsByStyle[style] || optionsByStyle.f;
+    return new Intl.DateTimeFormat('pl-PL', opts).format(date);
+  }
+
+  function formatRelativeTime(unixSeconds){
+    const diffSeconds = unixSeconds - Math.floor(Date.now() / 1000);
+    const abs = Math.abs(diffSeconds);
+    const units = [
+      ['rok', 'lata', 'lat', 31536000],
+      ['miesiąc', 'miesiące', 'miesięcy', 2592000],
+      ['dzień', 'dni', 'dni', 86400],
+      ['godzinę', 'godziny', 'godzin', 3600],
+      ['minutę', 'minuty', 'minut', 60],
+    ];
+    for (const [one, few, many, secs] of units){
+      if (abs >= secs){
+        const count = Math.round(abs / secs);
+        const word = count === 1 ? one : (count % 10 >= 2 && count % 10 <= 4 && (count % 100 < 10 || count % 100 >= 20) ? few : many);
+        return diffSeconds >= 0 ? `za ${count} ${word}` : `${count} ${word} temu`;
+      }
+    }
+    return diffSeconds >= 0 ? 'za chwilę' : 'przed chwilą';
+  }
+
+  function renderDiscordMarkdown(text){
+    let html = escapeHtml(text);
+    html = html.replace(/&lt;t:(\d+):([tTdDfFR])&gt;/g, (match, unix, style) => {
+      const label = formatDiscordTimestamp(parseInt(unix, 10), style);
+      return `<span class="discord-timestamp-tag" title="${escapeAttr(label)}">${escapeHtml(label)}</span>`;
+    });
+    html = html.replace(/\|\|(.+?)\|\|/g, '<span class="discord-spoiler" onclick="this.classList.add(\'revealed\')">$1</span>');
+    html = html.replace(/`([^`]+)`/g, '<code style="background:#1e1f22;padding:1px 4px;border-radius:3px;font-family:monospace;font-size:0.9em;">$1</code>');
+    html = html.replace(/\*\*\*(.+?)\*\*\*/g, '<b><i>$1</i></b>');
+    html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
+    html = html.replace(/__(.+?)__/g, '<u>$1</u>');
+    html = html.replace(/~~(.+?)~~/g, '<s>$1</s>');
+    html = html.replace(/\*(.+?)\*/g, '<i>$1</i>');
+    html = html.replace(/\n/g, '<br>');
+    return html;
+  }
+
   // ---------- preview rendering ----------
+  function formatSinglePing(ping){
+    if (ping.type === 'everyone') return '@everyone';
+    if (ping.type === 'here') return '@here';
+    if (ping.type === 'role'){
+      const raw = (ping.roleId || '').trim();
+      if (!raw) return '';
+      // accept either a raw numeric role ID or an already-formatted <@&id> mention
+      const idMatch = raw.match(/^\d{5,}$/) ? raw : (raw.match(/<@&(\d+)>/) || [])[1];
+      if (idMatch) return `<@&${idMatch}>`;
+      // fallback: user typed a role name like "@Members" instead of an ID — pass through as plain text
+      // (Discord will NOT actually ping in this case, only a real ID mention works)
+      return raw.startsWith('@') ? raw : `@${raw}`;
+    }
+    return '';
+  }
+
+  function buildPingContent(){
+    const joined = state.pings.map(formatSinglePing).filter(Boolean).join(' ');
+    return joined ? `||${joined}||` : '';
+  }
+
+  function renderPingsList(){
+    const list = document.getElementById('pingsList');
+    list.innerHTML = '';
+    state.pings.forEach((ping, i) => {
+      const row = document.createElement('div');
+      row.className = 'stop-row';
+      if (ping.type === 'role'){
+        row.innerHTML = `
+          <input type="text" class="hex" data-i="${i}" value="${escapeAttr(ping.roleId)}" placeholder="ID roli (np. 123456789012345678)">
+          <button class="rm" data-i="${i}">×</button>
+        `;
+      } else {
+        const label = ping.type === 'everyone' ? '@everyone' : '@here';
+        row.innerHTML = `
+          <input type="text" class="hex" value="${label}" disabled style="color:var(--text-dim);">
+          <button class="rm" data-i="${i}">×</button>
+        `;
+      }
+      list.appendChild(row);
+    });
+    list.querySelectorAll('input[data-i]').forEach(inp => {
+      inp.addEventListener('input', () => {
+        state.pings[+inp.dataset.i].roleId = inp.value;
+        renderPreview(); renderOutput();
+      });
+    });
+    list.querySelectorAll('button.rm').forEach(btn => {
+      btn.addEventListener('click', () => {
+        state.pings.splice(+btn.dataset.i, 1);
+        renderPingsList(); renderPreview(); renderOutput();
+      });
+    });
+  }
+
+  function renderPingPreview(){
+    const row = document.getElementById('contentLineRow');
+    const joined = state.pings.map(formatSinglePing).filter(Boolean).join(' ');
+    if (!joined){
+      row.style.display = 'none';
+      row.innerHTML = '';
+      return;
+    }
+    row.style.display = 'block';
+    const mentionsHtml = state.pings.map(formatSinglePing).filter(Boolean)
+      .map(p => `<span class="discord-mention">${escapeHtml(p)}</span>`).join(' ');
+    row.innerHTML = `<span class="discord-spoiler" onclick="this.classList.add('revealed')">${mentionsHtml}</span>`;
+  }
+
   function renderPreview(){
+    renderPingPreview();
     document.getElementById('previewBotName').textContent = state.botName || 'Bot';
     document.getElementById('previewAvatar').textContent = (state.botName || 'B').trim().charAt(0).toUpperCase();
 
@@ -658,32 +932,31 @@
     const authorRow = document.getElementById('embedAuthorRow');
     if (state.author.trim()){
       authorRow.style.display = 'flex';
-      document.getElementById('embedAuthorText').textContent = state.author;
+      document.getElementById('embedAuthorText').innerHTML = renderDiscordMarkdown(state.author);
     } else {
       authorRow.style.display = 'none';
     }
 
-    document.getElementById('embedTitle').textContent = state.title;
+    document.getElementById('embedTitle').innerHTML = renderDiscordMarkdown(state.title);
     document.getElementById('embedTitle').style.display = state.title.trim() ? 'block' : 'none';
 
-    document.getElementById('embedDesc').textContent = state.description;
+    document.getElementById('embedDesc').innerHTML = renderDiscordMarkdown(state.description);
     document.getElementById('embedDesc').style.display = state.description.trim() ? 'block' : 'none';
 
-    // categories -> one embed field per category, numbered rule lines with punishments
+    // ranking rendered as a single embed field: one line per entry, medal/number + player + stat
     const fieldsEl = document.getElementById('embedFields');
     fieldsEl.innerHTML = '';
-    state.categories.forEach(cat => {
-      const validRules = cat.rules.filter(r => r.text.trim());
-      if (!cat.name.trim() && !validRules.length) return;
-      const valueText = validRules.map((r, i) => {
-        const punishmentPart = r.punishment.trim() ? ` — *${r.punishment}*` : '';
-        return `**${i+1}.** ${r.text}${punishmentPart}`;
+    const validEntries = state.entries.filter(e => e.player.trim());
+    if (validEntries.length){
+      const valueText = validEntries.map((e, i) => {
+        const statPart = e.stat.trim() ? ` — **${e.stat}**` : '';
+        return `${rankLabel(i)} ${e.player}${statPart}`;
       }).join('\n');
       const div = document.createElement('div');
       div.className = 'discord-embed-field';
-      div.innerHTML = `<div class="discord-embed-field-name">${escapeHtml(cat.name)}</div><div class="discord-embed-field-value">${renderInlineMarkdown(valueText)}</div>`;
+      div.innerHTML = `<div class="discord-embed-field-name">${escapeHtml(state.statLabel || 'Ranking')}</div><div class="discord-embed-field-value">${renderDiscordMarkdown(valueText)}</div>`;
       fieldsEl.appendChild(div);
-    });
+    }
 
     const imageEl = document.getElementById('embedImage');
     if (state.imageUrl.trim()){
@@ -696,98 +969,68 @@
     const footerRow = document.getElementById('embedFooterRow');
     if (state.footer.trim()){
       footerRow.style.display = 'flex';
-      document.getElementById('embedFooterText').textContent = state.footer;
+      document.getElementById('embedFooterText').innerHTML = renderDiscordMarkdown(state.footer);
     } else {
       footerRow.style.display = 'none';
     }
 
-    const rulesCharCount = state.categories.reduce((sum, cat) =>
-      sum + cat.name.length + cat.rules.reduce((s,r) => s + r.text.length + r.punishment.length, 0), 0);
-    const totalChars = (state.title||'').length + (state.description||'').length + (state.footer||'').length + rulesCharCount;
+    const entriesCharCount = state.entries.reduce((sum,e) => sum + (e.player||'').length + (e.stat||'').length, 0);
+    const totalChars = (state.title||'').length + (state.description||'').length + (state.footer||'').length + entriesCharCount;
     document.getElementById('charCountLabel').textContent = `${totalChars} / 6000 znaków (limit Discorda)`;
   }
 
-  // minimal markdown for bold (**text**) and italic (*text*) inside field values, since these render as literal text otherwise
-  function renderInlineMarkdown(text){
-    let html = escapeHtml(text);
-    html = html.replace(/\*\*(.+?)\*\*/g, '<b>$1</b>');
-    html = html.replace(/\*(.+?)\*/g, '<i>$1</i>');
-    html = html.replace(/\n/g, '<br>');
-    return html;
+  // ---------- fields list UI ----------
+  function rankLabel(index){
+    return MEDALS[index] || `#${index + 1}`;
   }
 
-  // ---------- categories list UI ----------
-  function renderCategoriesList(){
-    const list = document.getElementById('categoriesList');
+  function renderEntriesList(){
+    const list = document.getElementById('entriesList');
     list.innerHTML = '';
-    state.categories.forEach((cat, ci) => {
-      const card = document.createElement('div');
-      card.className = 'category-card';
-      card.innerHTML = `
-        <div class="cat-name-row">
-          <input type="text" class="cat-name" data-ci="${ci}" data-role="catname" value="${escapeAttr(cat.name)}" placeholder="Nazwa kategorii (np. 💬 Czat)">
-          <button class="btn-mini rm-cat" data-ci="${ci}" title="Usuń kategorię">×</button>
+    state.entries.forEach((entry, i) => {
+      const row = document.createElement('div');
+      row.className = 'field-row';
+      row.innerHTML = `
+        <div class="field-row-top">
+          <span style="font-size:15px; flex:0 0 32px; text-align:center;">${rankLabel(i)}</span>
+          <input type="text" class="fname" data-i="${i}" data-role="player" value="${escapeAttr(entry.player)}" placeholder="Nick gracza" style="flex:1;">
+          <button class="btn-mini" data-i="${i}" data-dir="up" title="W górę">↑</button>
+          <button class="btn-mini" data-i="${i}" data-dir="down" title="W dół">↓</button>
+          <button class="btn-mini rm" data-i="${i}" title="Usuń">×</button>
         </div>
-        <div class="rule-items" id="ruleItems-${ci}"></div>
-        <button class="add-rule-btn" data-ci="${ci}">+ Dodaj punkt</button>
+        <input type="text" class="fvalue" data-i="${i}" data-role="stat" value="${escapeAttr(entry.stat)}" placeholder="Wartość statystyki">
       `;
-      list.appendChild(card);
-
-      const ruleItemsEl = card.querySelector(`#ruleItems-${ci}`);
-      cat.rules.forEach((r, ri) => {
-        const row = document.createElement('div');
-        row.className = 'rule-item-row';
-        row.innerHTML = `
-          <input type="text" class="rule-text" data-ci="${ci}" data-ri="${ri}" data-role="text" value="${escapeAttr(r.text)}" placeholder="Treść punktu">
-          <input type="text" class="rule-punishment" data-ci="${ci}" data-ri="${ri}" data-role="punishment" value="${escapeAttr(r.punishment)}" placeholder="Kara (np. Mute 1h)">
-          <button class="btn-mini rm-rule" data-ci="${ci}" data-ri="${ri}" title="Usuń punkt">×</button>
-        `;
-        ruleItemsEl.appendChild(row);
-      });
+      list.appendChild(row);
     });
 
-    list.querySelectorAll('input[data-role="catname"]').forEach(inp => {
+    list.querySelectorAll('input[data-role]').forEach(inp => {
       inp.addEventListener('input', () => {
-        const ci = +inp.dataset.ci;
-        state.categories[ci].name = inp.value;
-        state.lastFocused = { target: 'catname:' + ci, input: inp };
-        renderPreview(); renderOutput();
-      });
-      inp.addEventListener('focus', () => { state.lastFocused = { target: 'catname:' + inp.dataset.ci, input: inp }; });
-      ['click','keyup'].forEach(ev => inp.addEventListener(ev, () => { state.lastFocused = { target: 'catname:' + inp.dataset.ci, input: inp }; }));
-    });
-
-    list.querySelectorAll('input[data-role="text"], input[data-role="punishment"]').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const ci = +inp.dataset.ci, ri = +inp.dataset.ri, role = inp.dataset.role;
-        state.categories[ci].rules[ri][role] = inp.value;
-        state.lastFocused = { target: `rule:${ci}:${ri}:${role}`, input: inp };
+        const i = +inp.dataset.i;
+        const role = inp.dataset.role;
+        state.entries[i][role] = inp.value;
+        state.lastFocused = { target: 'entry:' + i + ':' + role, input: inp };
         renderPreview(); renderOutput();
       });
       inp.addEventListener('focus', () => {
-        state.lastFocused = { target: `rule:${inp.dataset.ci}:${inp.dataset.ri}:${inp.dataset.role}`, input: inp };
+        state.lastFocused = { target: 'entry:' + inp.dataset.i + ':' + inp.dataset.role, input: inp };
       });
       ['click','keyup'].forEach(ev => inp.addEventListener(ev, () => {
-        state.lastFocused = { target: `rule:${inp.dataset.ci}:${inp.dataset.ri}:${inp.dataset.role}`, input: inp };
+        state.lastFocused = { target: 'entry:' + inp.dataset.i + ':' + inp.dataset.role, input: inp };
       }));
     });
-
-    list.querySelectorAll('.rm-cat').forEach(btn => {
+    list.querySelectorAll('button[data-dir]').forEach(btn => {
       btn.addEventListener('click', () => {
-        state.categories.splice(+btn.dataset.ci, 1);
-        renderCategoriesList(); renderPreview(); renderOutput();
+        const i = +btn.dataset.i;
+        const j = btn.dataset.dir === 'up' ? i - 1 : i + 1;
+        if (j < 0 || j >= state.entries.length) return;
+        [state.entries[i], state.entries[j]] = [state.entries[j], state.entries[i]];
+        renderEntriesList(); renderPreview(); renderOutput();
       });
     });
-    list.querySelectorAll('.rm-rule').forEach(btn => {
+    list.querySelectorAll('.rm').forEach(btn => {
       btn.addEventListener('click', () => {
-        state.categories[+btn.dataset.ci].rules.splice(+btn.dataset.ri, 1);
-        renderCategoriesList(); renderPreview(); renderOutput();
-      });
-    });
-    list.querySelectorAll('.add-rule-btn').forEach(btn => {
-      btn.addEventListener('click', () => {
-        state.categories[+btn.dataset.ci].rules.push({ text: '', punishment: '' });
-        renderCategoriesList(); renderPreview(); renderOutput();
+        state.entries.splice(+btn.dataset.i, 1);
+        renderEntriesList(); renderPreview(); renderOutput();
       });
     });
   }
@@ -806,6 +1049,38 @@
     inputEl.setSelectionRange(newPos, newPos);
   }
 
+  // Resolves the last-focused field (title/description/footer/author/field-N) back to its live
+  // <input>/<textarea> element, re-querying the DOM in case it was rebuilt since focus. Shared by
+  // both the emoji grid and the timestamp inserter so "insert at cursor" behaves identically for both.
+  function resolveLastFocusedInput(){
+    const target = state.lastFocused.target;
+    let inputEl = state.lastFocused.input;
+    if (!inputEl || !document.body.contains(inputEl)){
+      if (target === 'title') inputEl = document.getElementById('titleInput');
+      else if (target === 'description') inputEl = document.getElementById('descInput');
+      else if (target === 'footer') inputEl = document.getElementById('footerInput');
+      else if (target === 'author') inputEl = document.getElementById('authorInput');
+      else if (target && target.startsWith('entry:')){
+        const [, idx, role] = target.split(':');
+        inputEl = document.querySelector(`input[data-role="${role}"][data-i="${idx}"]`);
+      }
+    }
+    if (!inputEl) inputEl = document.getElementById('titleInput');
+    return { target, inputEl };
+  }
+
+  function applyValueToState(target, newValue){
+    if (target === 'title'){ state.title = newValue; }
+    else if (target === 'description'){ state.description = newValue; }
+    else if (target === 'footer'){ state.footer = newValue; }
+    else if (target === 'author'){ state.author = newValue; }
+    else if (target && target.startsWith('entry:')){
+      const [, idx, role] = target.split(':');
+      state.entries[+idx][role] = newValue;
+    }
+    renderPreview(); renderOutput();
+  }
+
   function renderEmojiGrid(){
     const grid = document.getElementById('emojiGrid');
     grid.innerHTML = '';
@@ -813,40 +1088,8 @@
       const btn = document.createElement('button');
       btn.textContent = e;
       btn.addEventListener('click', () => {
-        const target = state.lastFocused.target;
-        let inputEl = state.lastFocused.input;
-        // re-resolve the element in case the DOM was rebuilt since focus
-        if (!inputEl || !document.body.contains(inputEl)){
-          if (target === 'title') inputEl = document.getElementById('titleInput');
-          else if (target === 'description') inputEl = document.getElementById('descInput');
-          else if (target === 'footer') inputEl = document.getElementById('footerInput');
-          else if (target === 'author') inputEl = document.getElementById('authorInput');
-          else if (target && target.startsWith('catname:')){
-            const [, ci] = target.split(':');
-            inputEl = document.querySelector(`input[data-role="catname"][data-ci="${ci}"]`);
-          }
-          else if (target && target.startsWith('rule:')){
-            const [, ci, ri, role] = target.split(':');
-            inputEl = document.querySelector(`input[data-role="${role}"][data-ci="${ci}"][data-ri="${ri}"]`);
-          }
-        }
-        if (!inputEl) { inputEl = document.getElementById('titleInput'); }
-
-        insertAtCursor(inputEl, e, (newValue) => {
-          if (target === 'title'){ state.title = newValue; }
-          else if (target === 'description'){ state.description = newValue; }
-          else if (target === 'footer'){ state.footer = newValue; }
-          else if (target === 'author'){ state.author = newValue; }
-          else if (target && target.startsWith('catname:')){
-            const [, ci] = target.split(':');
-            state.categories[+ci].name = newValue;
-          }
-          else if (target && target.startsWith('rule:')){
-            const [, ci, ri, role] = target.split(':');
-            state.categories[+ci].rules[+ri][role] = newValue;
-          }
-          renderPreview(); renderOutput();
-        });
+        const { target, inputEl } = resolveLastFocusedInput();
+        insertAtCursor(inputEl, e, (newValue) => applyValueToState(target, newValue));
       });
       grid.appendChild(btn);
     });
@@ -874,10 +1117,11 @@
     return parseInt(hex.replace('#',''), 16);
   }
 
-  function categoryToFieldValue(cat){
-    return cat.rules.filter(r => r.text.trim()).map((r, i) => {
-      const punishmentPart = r.punishment.trim() ? ` — *${r.punishment}*` : '';
-      return `**${i+1}.** ${r.text}${punishmentPart}`;
+  function rankingFieldValue(){
+    const validEntries = state.entries.filter(e => e.player.trim());
+    return validEntries.map((e, i) => {
+      const statPart = e.stat.trim() ? ` — **${e.stat}**` : '';
+      return `${rankLabel(i)} ${e.player}${statPart}`;
     }).join('\n');
   }
 
@@ -887,28 +1131,32 @@
     if (state.title.trim()) embed.title = state.title;
     if (state.description.trim()) embed.description = state.description;
     embed.color = hexToDecimal(state.color);
-    const validCategories = state.categories.filter(cat => cat.name.trim() && cat.rules.some(r => r.text.trim()));
-    if (validCategories.length) embed.fields = validCategories.map(cat => ({ name: cat.name, value: categoryToFieldValue(cat), inline: false }));
+    const validEntries = state.entries.filter(e => e.player.trim());
+    if (validEntries.length) embed.fields = [{ name: state.statLabel || 'Ranking', value: rankingFieldValue(), inline: false }];
     if (state.imageUrl.trim()) embed.image = { url: state.imageUrl };
     if (state.footer.trim()) embed.footer = { text: state.footer };
     return embed;
   }
 
   function buildJsonOutput(){
-    const payload = { embeds: [buildEmbedObject()] };
+    const payload = {};
+    const pingContent = buildPingContent();
+    if (pingContent) payload.content = pingContent;
+    payload.embeds = [buildEmbedObject()];
     return JSON.stringify(payload, null, 2);
   }
 
   function buildTextOutput(){
     let out = '';
+    const pingContent = buildPingContent();
+    if (pingContent) out += pingContent + '\n\n';
     if (state.author.trim()) out += state.author + '\n';
     if (state.title.trim()) out += '**' + state.title + '**\n\n';
     if (state.description.trim()) out += state.description + '\n\n';
-    state.categories.forEach(cat => {
-      const validRules = cat.rules.filter(r => r.text.trim());
-      if (!cat.name.trim() && !validRules.length) return;
-      out += '**' + cat.name + '**\n' + categoryToFieldValue(cat) + '\n\n';
-    });
+    const validEntries = state.entries.filter(e => e.player.trim());
+    if (validEntries.length){
+      out += '**' + (state.statLabel || 'Ranking') + '**\n' + rankingFieldValue() + '\n\n';
+    }
     if (state.footer.trim()) out += '-# ' + state.footer;
     return out.trim();
   }
@@ -931,6 +1179,54 @@
     });
     el.addEventListener('focus', () => { state.lastFocused = { target: focusTarget, input: el }; });
     ['click','keyup'].forEach(ev => el.addEventListener(ev, () => { state.lastFocused = { target: focusTarget, input: el }; }));
+  }
+
+  // Wraps the current selection in the given input/textarea with Discord Markdown markers
+  // (bold **, italic *, underline __, strikethrough ~~, inline code `). If nothing is selected,
+  // it inserts an empty pair of markers with the cursor placed between them, so the user can just
+  // start typing — this becomes their default formatting for whatever they type next.
+  const MARKDOWN_WRAPPERS = {
+    bold: ['**', '**'],
+    italic: ['*', '*'],
+    underline: ['__', '__'],
+    strike: ['~~', '~~'],
+    code: ['`', '`'],
+    spoiler: ['||', '||'],
+  };
+
+  function applyMarkdownFormat(inputEl, fmt, stateKey){
+    const [open, close] = MARKDOWN_WRAPPERS[fmt];
+    const start = inputEl.selectionStart != null ? inputEl.selectionStart : inputEl.value.length;
+    const end = inputEl.selectionEnd != null ? inputEl.selectionEnd : inputEl.value.length;
+    const current = inputEl.value;
+    const selected = current.slice(start, end);
+    const newValue = current.slice(0, start) + open + selected + close + current.slice(end);
+    inputEl.value = newValue;
+    state[stateKey] = newValue;
+    inputEl.focus();
+    if (selected.length){
+      // keep the wrapped text selected so the user can immediately chain another format or overtype it
+      inputEl.setSelectionRange(start + open.length, start + open.length + selected.length);
+    } else {
+      // nothing was selected: place the cursor between the markers so typing continues inside them
+      const cursorPos = start + open.length;
+      inputEl.setSelectionRange(cursorPos, cursorPos);
+    }
+    renderPreview(); renderOutput();
+  }
+
+  function bindFormatToolbars(){
+    document.querySelectorAll('.format-toolbar').forEach(toolbar => {
+      const targetId = toolbar.dataset.target;
+      const stateKeyMap = { titleInput: 'title', descInput: 'description', footerInput: 'footer', authorInput: 'author' };
+      const stateKey = stateKeyMap[targetId];
+      toolbar.querySelectorAll('button[data-fmt]').forEach(btn => {
+        btn.addEventListener('click', () => {
+          const inputEl = document.getElementById(targetId);
+          applyMarkdownFormat(inputEl, btn.dataset.fmt, stateKey);
+        });
+      });
+    });
   }
 
   bindTextInput('botNameInput', 'botName', 'botName');
@@ -958,10 +1254,51 @@
     }
   });
 
-  document.getElementById('addCategoryBtn').addEventListener('click', () => {
-    if (state.categories.length >= 25) return;
-    state.categories.push({ name: '', rules: [{ text: '', punishment: '' }] });
-    renderCategoriesList(); renderPreview(); renderOutput();
+  document.getElementById('addEntryBtn').addEventListener('click', () => {
+    if (state.entries.length >= 10) return;
+    state.entries.push({ player: '', stat: '' });
+    renderEntriesList(); renderPreview(); renderOutput();
+  });
+
+  document.getElementById('statLabelInput').addEventListener('input', (e) => {
+    state.statLabel = e.target.value;
+    renderPreview(); renderOutput();
+  });
+
+  document.getElementById('insertTimestampBtn').addEventListener('click', () => {
+    const dateInput = document.getElementById('timestampDateInput');
+    const style = document.getElementById('timestampStyleSelect').value;
+    const hideAsSpoiler = document.getElementById('timestampSpoilerCheckbox').checked;
+    if (!dateInput.value){
+      dateInput.focus();
+      return;
+    }
+    // datetime-local gives a value with no timezone info; the browser's Date constructor
+    // interprets it as local time, which is what we want — the person picking the date sees
+    // it in their own timezone, and Discord re-renders it in each reader's timezone anyway.
+    const unixSeconds = Math.floor(new Date(dateInput.value).getTime() / 1000);
+    if (isNaN(unixSeconds)) return;
+    let tag = `<t:${unixSeconds}:${style}>`;
+    if (hideAsSpoiler) tag = `||${tag}||`;
+
+    const { target, inputEl } = resolveLastFocusedInput();
+    insertAtCursor(inputEl, tag, (newValue) => applyValueToState(target, newValue));
+  });
+
+  document.getElementById('addPingEveryone').addEventListener('click', () => {
+    if (state.pings.some(p => p.type === 'everyone')) return; // no duplicates
+    state.pings.push({ type: 'everyone', roleId: '' });
+    renderPingsList(); renderPreview(); renderOutput();
+  });
+  document.getElementById('addPingHere').addEventListener('click', () => {
+    if (state.pings.some(p => p.type === 'here')) return;
+    state.pings.push({ type: 'here', roleId: '' });
+    renderPingsList(); renderPreview(); renderOutput();
+  });
+  document.getElementById('addPingRole').addEventListener('click', () => {
+    if (state.pings.length >= 10) return;
+    state.pings.push({ type: 'role', roleId: '' });
+    renderPingsList(); renderPreview(); renderOutput();
   });
 
   document.getElementById('outputFormatSeg').addEventListener('click', (e) => {
@@ -1019,13 +1356,13 @@
   });
 
   // ---------- webhook: persisted URL + send ----------
-  const WEBHOOK_STORAGE_KEY = 'enchant-webhook-url:regulamin';
+  const WEBHOOK_STORAGE_KEY = 'enchant-webhook-url:discord-broadcast';
 
   function loadSavedWebhookUrl(){
     try {
       const saved = localStorage.getItem(WEBHOOK_STORAGE_KEY);
       if (saved) document.getElementById('webhookUrlInput').value = saved;
-    } catch(e){ /* localStorage unavailable — ignore, field just stays empty */ }
+    } catch(e){ /* localStorage unavailable (e.g. private browsing) — ignore, field just stays empty */ }
   }
 
   function saveWebhookUrl(url){
@@ -1053,7 +1390,8 @@
       return;
     }
 
-    const payload = { embeds: [buildEmbedObject()] };
+    const payload = { content: buildPingContent(), embeds: [buildEmbedObject()] };
+    if (!payload.content) delete payload.content;
 
     const originalBtnText = btn.textContent;
     btn.textContent = 'Wysyłanie...';
@@ -1086,11 +1424,13 @@
   });
 
   // ---------- init ----------
-  renderCategoriesList();
+  renderEntriesList();
+  renderPingsList();
   renderPreview();
   renderEmojiGrid();
   renderColorPresets();
   renderOutput();
+  bindFormatToolbars();
   loadSavedWebhookUrl();
 })();
 </script>

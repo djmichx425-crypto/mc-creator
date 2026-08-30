@@ -1,0 +1,3436 @@
+<!DOCTYPE html>
+<html lang="pl">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Kreator Skript — Enchant</title>
+<style>
+  :root {
+    --bg-0: #0a0a0c;
+    --bg-1: #131318;
+    --bg-2: #1a1a21;
+    --panel: #101014;
+    --line: #23232b;
+    --line-bright: #33333e;
+    --text: #f2f2f5;
+    --text-dim: #8b8b96;
+    --accent: #2f6bff;
+    --accent-dim: #1f4fd6;
+    --grid: #0e0e12;
+
+    --cat-control: #f0b132;
+    --cat-event: #e5484d;
+    --cat-var: #a78bfa;
+    --cat-action: #3ba55d;
+    --cat-condition: #3ac1f0;
+    --cat-misc: #8b8b96;
+  }
+
+  * { box-sizing: border-box; }
+
+  html, body {
+    margin: 0;
+    height: 100%;
+    background: var(--bg-0);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
+    overflow: hidden;
+  }
+
+  .app {
+    display: grid;
+    grid-template-rows: auto auto 1fr;
+    height: 100vh;
+  }
+
+  header {
+    display: flex;
+    align-items: center;
+    gap: 14px;
+    padding: 12px 20px;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+    flex-wrap: wrap;
+  }
+  header .tag {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    background: var(--accent);
+    box-shadow: 0 0 12px 2px rgba(47,107,255,0.5);
+    flex-shrink: 0;
+  }
+  header h1 { font-size: 16px; margin: 0; font-weight: 800; white-space: nowrap; }
+  header .sub { color: var(--text-dim); font-size: 11.5px; white-space: nowrap; }
+  header .spacer { flex: 1; }
+  header .hbtn {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 12px;
+    font-family: inherit;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    white-space: nowrap;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  header .hbtn:hover { border-color: var(--accent); background: var(--bg-2); }
+  header .hbtn.primary { background: var(--accent); border-color: var(--accent); }
+  header .hbtn.primary:hover { background: var(--accent-dim); }
+  header input[type=file] { display: none; }
+
+  .main {
+    display: grid;
+    grid-template-columns: 260px 1fr 420px;
+    min-height: 0;
+  }
+  @media (max-width: 1100px) {
+    .main { grid-template-columns: 220px 1fr 340px; }
+  }
+
+  /* ---------- mobile: tabbed single-column layout ---------- */
+  .mobile-tabs {
+    display: none;
+    border-bottom: 1px solid var(--line);
+    background: var(--panel);
+  }
+  @media (max-width: 720px) {
+    header { padding: 10px 12px; gap: 8px; }
+    header h1 { font-size: 14px; }
+    header .sub { display: none; }
+    header .hbtn { padding: 7px 9px; font-size: 11px; }
+    header .hbtn span.hbtn-label { display: none; }
+
+    .mobile-tabs { display: flex; }
+    .mobile-tabs button {
+      flex: 1;
+      background: none;
+      border: none;
+      color: var(--text-dim);
+      padding: 11px 4px;
+      font-family: inherit;
+      font-size: 12px;
+      font-weight: 700;
+      cursor: pointer;
+      border-bottom: 2px solid transparent;
+    }
+    .mobile-tabs button.active { color: var(--accent); border-bottom-color: var(--accent); }
+
+    .main {
+      grid-template-columns: 1fr;
+      grid-auto-rows: 1fr;
+    }
+    .palette, .workspace-wrap, .code-panel {
+      display: none !important;
+      grid-column: 1;
+      grid-row: 1;
+      min-height: 0;
+      border: none;
+    }
+    .main.tab-palette .palette,
+    .main.tab-workspace .workspace-wrap,
+    .main.tab-code .code-panel {
+      display: flex !important;
+      flex-direction: column;
+    }
+    .code-panel { max-height: none; }
+  }
+
+  /* ---------- palette ---------- */
+  .palette {
+    background: var(--panel);
+    border-right: 1px solid var(--line);
+    overflow-y: auto;
+    padding: 12px;
+  }
+  .palette-search {
+    width: 100%;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 8px 10px;
+    font-family: inherit;
+    font-size: 12.5px;
+    margin-bottom: 12px;
+  }
+  .palette-cat {
+    margin-bottom: 4px;
+  }
+  .palette-cat-head {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    padding: 8px 4px 6px;
+    cursor: pointer;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    user-select: none;
+  }
+  .palette-cat-head .dot {
+    width: 8px; height: 8px;
+    border-radius: 2px;
+    flex-shrink: 0;
+  }
+  .palette-cat-head .chev {
+    margin-left: auto;
+    font-size: 9px;
+    transition: transform 0.15s;
+  }
+  .palette-cat.collapsed .chev { transform: rotate(-90deg); }
+  .palette-cat.collapsed .palette-items { display: none; }
+  .palette-items { display: flex; flex-direction: column; gap: 5px; padding-bottom: 6px; }
+
+  .palette-block {
+    border-radius: 7px;
+    padding: 7px 9px;
+    font-size: 11.5px;
+    font-weight: 600;
+    cursor: grab;
+    color: #0d0d11;
+    user-select: none;
+    border: 1px solid rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .palette-block:active { cursor: grabbing; }
+  .palette-block.dragging-source { opacity: 0.4; }
+  .palette-block .add-btn {
+    display: none;
+    margin-left: auto;
+    background: rgba(0,0,0,0.2);
+    border: none;
+    border-radius: 5px;
+    width: 22px; height: 22px;
+    font-size: 14px;
+    font-weight: 800;
+    color: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .palette-block .add-btn:hover { background: rgba(0,0,0,0.35); }
+  /* Touch devices (phones/tablets) can't use native HTML5 drag-and-drop reliably, and a tabbed
+     mobile layout means the palette and workspace are on different screens anyway — so on
+     coarse-pointer devices, tapping "+" is the primary way to add a block instead of dragging. */
+  @media (pointer: coarse) {
+    .palette-block .add-btn { display: flex; align-items: center; justify-content: center; }
+  }
+
+  .target-container-label {
+    display: none;
+    background: var(--bg-1);
+    border: 1px solid var(--accent);
+    border-radius: 8px;
+    padding: 10px 12px;
+    font-size: 12.5px;
+    color: var(--text-dim);
+    margin-bottom: 10px;
+    font-weight: 600;
+  }
+  .target-container-label.is-root {
+    border-color: #f0b132;
+    background: rgba(240,177,50,0.1);
+  }
+  @media (pointer: coarse) {
+    .target-container-label { display: block; }
+  }
+  .target-container-label b { color: var(--text); }
+  .target-container-label button {
+    background: var(--bg-2);
+    border: 1px solid var(--line);
+    border-radius: 6px;
+    color: var(--text-dim);
+    padding: 3px 8px;
+    font-size: 10.5px;
+    cursor: pointer;
+    margin-left: 6px;
+  }
+
+  .block.target-selected > .block-row {
+    outline: 2px solid #fff;
+    outline-offset: -2px;
+  }
+
+  /* ---------- workspace ---------- */
+  .workspace-wrap {
+    background: var(--bg-0);
+    background-image:
+      linear-gradient(var(--grid) 1px, transparent 1px),
+      linear-gradient(90deg, var(--grid) 1px, transparent 1px);
+    background-size: 22px 22px;
+    overflow: auto;
+    position: relative;
+    padding: 20px;
+  }
+  .workspace {
+    min-height: 100%;
+    min-width: 100%;
+  }
+  .workspace-empty-hint {
+    color: var(--text-dim);
+    font-size: 13px;
+    text-align: center;
+    margin-top: 80px;
+    line-height: 1.7;
+  }
+
+  .block-list {
+    display: flex;
+    flex-direction: column;
+    gap: 4px;
+    min-height: 8px;
+  }
+  .block-list.drop-target { background: rgba(47,107,255,0.08); border-radius: 6px; outline: 2px dashed var(--accent); outline-offset: 2px; }
+
+  .block {
+    border-radius: 8px;
+    color: #0d0d11;
+    font-size: 12.5px;
+    position: relative;
+    box-shadow: 0 1px 0 rgba(255,255,255,0.15) inset, 0 2px 4px rgba(0,0,0,0.3);
+  }
+  .block.dragging { opacity: 0.35; }
+  .block-row {
+    display: flex;
+    align-items: center;
+    gap: 6px;
+    padding: 7px 9px;
+    flex-wrap: wrap;
+    cursor: grab;
+  }
+  .block-row:active { cursor: grabbing; }
+  .block-label { font-weight: 700; white-space: nowrap; }
+  .block input[type=text], .block select {
+    background: rgba(255,255,255,0.55);
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 5px;
+    padding: 3px 6px;
+    font-family: inherit;
+    font-size: 11.5px;
+    color: #0d0d11;
+    min-width: 40px;
+  }
+  .block input[type=text]:focus, .block select:focus { outline: 2px solid #0d0d11; }
+  .block .block-btn {
+    background: rgba(0,0,0,0.15);
+    border: none;
+    border-radius: 5px;
+    color: #0d0d11;
+    width: 20px; height: 20px;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .block .block-btn:hover { background: rgba(0,0,0,0.28); }
+  .block .block-btn.del { margin-left: auto; }
+
+  .block-body {
+    padding: 4px 6px 8px 22px;
+    border-top: 1px solid rgba(0,0,0,0.12);
+    background: rgba(0,0,0,0.06);
+    border-radius: 0 0 8px 8px;
+  }
+  .block-body-label {
+    font-size: 9.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.06em;
+    opacity: 0.65;
+    margin: 4px 0 3px 2px;
+  }
+
+  .block[data-cat="control"] { background: var(--cat-control); }
+  .block[data-cat="event"] { background: var(--cat-event); color: #fff; }
+  .block[data-cat="event"] .block-btn { color: #fff; background: rgba(255,255,255,0.18); }
+  .block[data-cat="event"] .block-btn:hover { background: rgba(255,255,255,0.3); }
+  .block[data-cat="event"] input, .block[data-cat="event"] select { color: #0d0d11; }
+  .block[data-cat="var"] { background: var(--cat-var); }
+  .block[data-cat="action"] { background: var(--cat-action); color: #fff; }
+  .block[data-cat="action"] .block-btn { color: #fff; background: rgba(255,255,255,0.18); }
+  .block[data-cat="action"] .block-btn:hover { background: rgba(255,255,255,0.3); }
+  .block[data-cat="action"] input, .block[data-cat="action"] select { color: #0d0d11; }
+  .block[data-cat="condition"] { background: var(--cat-condition); }
+  .block[data-cat="misc"] { background: var(--cat-misc); color: #fff; }
+  .block[data-cat="misc"] .block-btn { color: #fff; background: rgba(255,255,255,0.18); }
+  .block[data-cat="misc"] input, .block[data-cat="misc"] select { color: #0d0d11; }
+
+  /* ---------- condition slots (puzzle-piece drop zones inside if/while/else-if) ---------- */
+  .condition-slot {
+    display: inline-flex;
+    align-items: center;
+    min-width: 90px;
+    min-height: 24px;
+    background: rgba(0,0,0,0.18);
+    border: 1.5px dashed rgba(0,0,0,0.35);
+    border-radius: 6px;
+    padding: 2px 6px;
+    vertical-align: middle;
+  }
+  .condition-slot.drop-hover {
+    background: rgba(255,255,255,0.25);
+    border-color: #fff;
+  }
+  .condition-slot.has-block {
+    border-style: solid;
+    padding: 0;
+    background: none;
+  }
+  .condition-slot .slot-placeholder {
+    font-size: 10.5px;
+    opacity: 0.6;
+    font-style: italic;
+    white-space: nowrap;
+  }
+  .condition-block {
+    display: inline-flex;
+    align-items: center;
+    gap: 5px;
+    background: var(--cat-condition);
+    color: #0d0d11;
+    border-radius: 6px;
+    padding: 4px 7px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: grab;
+    flex-wrap: wrap;
+  }
+  .condition-block.combo {
+    background: #2596b8;
+    color: #fff;
+    gap: 6px;
+  }
+  .condition-block.dragging { opacity: 0.35; }
+  .condition-block input[type=text] {
+    background: rgba(255,255,255,0.6);
+    border: 1px solid rgba(0,0,0,0.2);
+    border-radius: 4px;
+    padding: 2px 5px;
+    font-family: inherit;
+    font-size: 10.5px;
+    color: #0d0d11;
+    min-width: 30px;
+  }
+  .condition-block .cond-del {
+    background: rgba(0,0,0,0.18);
+    border: none;
+    border-radius: 4px;
+    width: 16px; height: 16px;
+    font-size: 10px;
+    cursor: pointer;
+    color: inherit;
+    flex-shrink: 0;
+    line-height: 1;
+  }
+  .condition-block .cond-del:hover { background: rgba(0,0,0,0.32); }
+  .palette-cond-block {
+    border-radius: 6px;
+    padding: 6px 8px;
+    font-size: 11px;
+    font-weight: 600;
+    cursor: grab;
+    color: #0d0d11;
+    background: var(--cat-condition);
+    user-select: none;
+    border: 1px solid rgba(0,0,0,0.15);
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+  .palette-cond-block.combo { background: #2596b8; color: #fff; }
+  .palette-cond-block .add-btn {
+    display: none;
+    margin-left: auto;
+    background: rgba(0,0,0,0.2);
+    border: none;
+    border-radius: 5px;
+    width: 20px; height: 20px;
+    font-size: 13px;
+    font-weight: 800;
+    color: inherit;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  @media (pointer: coarse) {
+    .palette-cond-block .add-btn { display: flex; align-items: center; justify-content: center; }
+  }
+
+  .drop-line {
+    height: 3px;
+    background: var(--accent);
+    border-radius: 2px;
+    margin: 1px 0;
+    display: none;
+  }
+  .drop-line.show { display: block; }
+
+  /* ---------- code panel ---------- */
+  .code-panel {
+    background: var(--panel);
+    border-left: 1px solid var(--line);
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+  .code-panel-head {
+    padding: 12px 16px;
+    border-bottom: 1px solid var(--line);
+    display: flex;
+    align-items: center;
+    gap: 8px;
+  }
+  .code-panel-head .ptitle {
+    font-size: 11px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--accent);
+    font-weight: 700;
+    flex: 1;
+  }
+  .code-panel-body {
+    flex: 1;
+    overflow: auto;
+    padding: 14px 16px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    line-height: 1.6;
+    white-space: pre;
+    color: var(--text);
+  }
+  .code-panel-foot {
+    padding: 10px 16px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+  }
+  .code-panel-foot button {
+    flex: 1;
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 10px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .code-panel-foot button:hover { background: var(--accent-dim); }
+  .code-panel-foot button.copied { background: #3ba55d; }
+
+  .lint-panel {
+    border-top: 1px solid var(--line);
+    max-height: 160px;
+    overflow-y: auto;
+    padding: 10px 16px;
+    font-size: 11.5px;
+  }
+  .lint-panel .ptitle {
+    font-size: 10.5px;
+    text-transform: uppercase;
+    letter-spacing: 0.08em;
+    color: var(--text-dim);
+    font-weight: 700;
+    margin-bottom: 6px;
+  }
+  .lint-item {
+    padding: 6px 8px;
+    border-radius: 6px;
+    margin-bottom: 5px;
+    display: flex;
+    gap: 7px;
+    align-items: flex-start;
+    line-height: 1.4;
+  }
+  .lint-item.warn { background: rgba(240,177,50,0.12); color: #f0b132; }
+  .lint-item.error { background: rgba(229,72,77,0.12); color: #e5484d; }
+  .lint-item.fixed { background: rgba(59,165,93,0.12); color: #3ba55d; }
+  .lint-item .lint-icon { flex-shrink: 0; }
+  .lint-empty { color: var(--text-dim); font-size: 11.5px; padding: 4px 0; }
+
+  /* ---------- modals ---------- */
+  .modal-overlay {
+    position: fixed; inset: 0;
+    background: rgba(0,0,0,0.6);
+    display: none;
+    align-items: center;
+    justify-content: center;
+    z-index: 100;
+  }
+  .modal-overlay.show { display: flex; }
+  .modal {
+    background: var(--panel);
+    border: 1px solid var(--line);
+    border-radius: 12px;
+    width: min(560px, 90vw);
+    max-height: 80vh;
+    display: flex;
+    flex-direction: column;
+  }
+  .modal-head {
+    padding: 16px 18px;
+    border-bottom: 1px solid var(--line);
+    font-weight: 700;
+    font-size: 14px;
+    display: flex;
+    align-items: center;
+  }
+  .modal-head .close {
+    margin-left: auto;
+    background: none;
+    border: none;
+    color: var(--text-dim);
+    font-size: 16px;
+    cursor: pointer;
+  }
+  .modal-body {
+    padding: 18px;
+    overflow-y: auto;
+  }
+  .modal-body textarea {
+    width: 100%;
+    min-height: 260px;
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    color: var(--text);
+    padding: 10px;
+    font-family: 'Courier New', monospace;
+    font-size: 12px;
+    resize: vertical;
+  }
+  .modal-foot {
+    padding: 14px 18px;
+    border-top: 1px solid var(--line);
+    display: flex;
+    gap: 8px;
+    justify-content: flex-end;
+  }
+  .modal-foot button {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 8px;
+    padding: 9px 16px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12.5px;
+    cursor: pointer;
+  }
+  .modal-foot button.secondary {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    color: var(--text);
+  }
+  .modal-hint { color: var(--text-dim); font-size: 11.5px; margin-top: 8px; line-height: 1.5; }
+
+  .template-item {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+  }
+  .template-item .t-label {
+    font-weight: 700;
+    font-size: 13.5px;
+    margin-bottom: 6px;
+  }
+  .template-item .t-desc {
+    font-size: 12px;
+    color: var(--text-dim);
+    line-height: 1.5;
+    margin-bottom: 10px;
+  }
+  .template-item button {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 7px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+  }
+  .template-item button:hover { background: var(--accent-dim); }
+</style>
+</head>
+<body>
+<div class="app">
+
+  <header>
+    <div class="tag"></div>
+    <h1>Kreator Skript</h1>
+    <div class="sub">bloki jak Scratch → gotowy kod .sk</div>
+    <div class="spacer"></div>
+    <button class="hbtn primary" id="btnTemplates">📚 <span class="hbtn-label">Biblioteka szablonów</span></button>
+    <button class="hbtn" id="btnImportSk">📄 <span class="hbtn-label">Importuj .sk</span></button>
+    <button class="hbtn" id="btnImportJson">📂 <span class="hbtn-label">Importuj JSON</span></button>
+    <button class="hbtn" id="btnExportJson">💾 <span class="hbtn-label">Eksport JSON</span></button>
+    <button class="hbtn" id="btnClear">🗑 <span class="hbtn-label">Wyczyść</span></button>
+    <input type="file" id="fileImportSk" accept=".sk,.txt" style="display:none;">
+  </header>
+
+  <div class="mobile-tabs" id="mobileTabs">
+    <button data-tab="palette" class="active">🧩 Bloki</button>
+    <button data-tab="workspace">🛠 Workspace</button>
+    <button data-tab="code">📄 Kod</button>
+  </div>
+
+  <div class="main tab-palette" id="mainGrid">
+
+    <!-- PALETTE -->
+    <div class="palette" id="palette">
+      <input type="text" class="palette-search" id="paletteSearch" placeholder="Szukaj bloku…">
+      <div id="paletteCategories"></div>
+    </div>
+
+    <!-- WORKSPACE -->
+    <div class="workspace-wrap" id="workspaceWrap">
+      <div class="workspace">
+        <div class="target-container-label" id="targetContainerLabel">Dodawanie do: <b id="targetContainerName">początek skryptu</b><button id="resetTargetBtn">Resetuj</button></div>
+        <div class="block-list" id="rootList"></div>
+        <div class="workspace-empty-hint" id="emptyHint">Na telefonie: dotknij "+" przy bloku w palecie, żeby go dodać. Dotknij bloku w workspace, żeby dodawać kolejne wewnątrz niego.<br>Na komputerze: przeciągnij bloki z lewej palety.</div>
+      </div>
+    </div>
+
+    <!-- CODE PANEL -->
+    <div class="code-panel">
+      <div class="code-panel-head">
+        <span class="ptitle">Wygenerowany kod .sk</span>
+      </div>
+      <div class="code-panel-body" id="codeOutput"></div>
+      <div class="lint-panel" id="lintPanel">
+        <div class="ptitle">Automatyczna naprawa i ostrzeżenia</div>
+        <div id="lintList"></div>
+      </div>
+      <div class="code-panel-foot">
+        <button id="btnCopyCode">Kopiuj kod</button>
+        <button id="btnDownloadSk">Pobierz .sk</button>
+      </div>
+    </div>
+
+  </div>
+</div>
+
+<!-- IMPORT .sk MODAL -->
+<div class="modal-overlay" id="importSkModal">
+  <div class="modal">
+    <div class="modal-head">Importuj kod Skript
+      <button class="close" data-close-modal="importSkModal">×</button>
+    </div>
+    <div class="modal-body">
+      <textarea id="importSkTextarea" placeholder="Wklej tutaj kod .sk..."></textarea>
+      <div class="modal-hint">Parser rozpoznaje popularne wzorce (command, trigger, if/else, pętle, set/add/delete variable, wysyłane wiadomości, cancel event, itd.). Linie, których nie rozpozna, trafią jako bloki "surowy kod" — nic nie zostanie utracone, ale mogą wymagać ręcznego złożenia w bloki.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="importSkModal">Anuluj</button>
+      <button id="btnDoImportSk">Importuj</button>
+    </div>
+  </div>
+</div>
+
+<!-- TEMPLATE LIBRARY MODAL -->
+<div class="modal-overlay" id="templatesModal">
+  <div class="modal">
+    <div class="modal-head">Biblioteka szablonów
+      <button class="close" data-close-modal="templatesModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-hint" style="margin-top:0; margin-bottom:14px;">Gotowe, sprawdzone wzorce z prawdziwych projektów (GUI menu, selektor graczy, kosmetyki, permisje) — wstawiają kompletne, edytowalne drzewo bloków jednym kliknięciem.</div>
+      <div id="templatesList"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="templatesModal">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- CUSTOM CONFIRM MODAL (replaces native confirm(), which can be silently blocked in restricted app webviews) -->
+<div class="modal-overlay" id="confirmModal">
+  <div class="modal" style="width:min(420px,90vw);">
+    <div class="modal-head"><span id="confirmModalTitle">Potwierdź</span>
+      <button class="close" data-close-modal="confirmModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div id="confirmModalMessage" style="font-size:13px; line-height:1.5;"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="confirmModal">Anuluj</button>
+      <button id="confirmModalOkBtn">Potwierdź</button>
+    </div>
+  </div>
+</div>
+
+<!-- IMPORT MODE CHOICE MODAL: workspace already has content, ask whether to replace it or add alongside -->
+<div class="modal-overlay" id="importChoiceModal">
+  <div class="modal" style="width:min(440px,90vw);">
+    <div class="modal-head">Workspace nie jest pusty
+      <button class="close" data-close-modal="importChoiceModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div style="font-size:13px; line-height:1.5;">Masz już bloki w workspace. Czy zaimportowane bloki mają zastąpić obecny workspace, czy zostać dodane obok istniejących?</div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" id="importChoiceAddBtn">Dodaj obok</button>
+      <button id="importChoiceReplaceBtn">Zastąp</button>
+    </div>
+  </div>
+</div>
+
+<!-- EXPORT FALLBACK MODAL: shown always alongside the real file download attempt, since
+     Blob-based downloads can silently fail with no detectable error in some restricted app
+     webviews — this guarantees the exported content is always reachable via copy-paste. -->
+<div class="modal-overlay" id="exportFallbackModal">
+  <div class="modal">
+    <div class="modal-head"><span id="exportFallbackTitle">Eksport</span>
+      <button class="close" data-close-modal="exportFallbackModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-hint" style="margin-top:0; margin-bottom:10px;">Jeśli pobieranie pliku nie zadziałało automatycznie, skopiuj treść poniżej i zapisz ją ręcznie jako plik.</div>
+      <textarea id="exportFallbackTextarea" readonly></textarea>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="exportFallbackModal">Zamknij</button>
+      <button id="exportFallbackCopyBtn">Kopiuj treść</button>
+    </div>
+  </div>
+</div>
+
+<!-- MANUAL JSON IMPORT MODAL: fallback for restricted webviews where the native file picker
+     (input.click()) doesn't reliably open — lets the person paste JSON content directly instead. -->
+<div class="modal-overlay" id="importJsonManualModal">
+  <div class="modal">
+    <div class="modal-head">Importuj JSON
+      <button class="close" data-close-modal="importJsonManualModal">×</button>
+    </div>
+    <div class="modal-body">
+      <label class="flabel" style="display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:7px;">Wybierz plik</label>
+      <input type="file" id="fileImportJson" accept=".json" style="display:block; width:100%; margin-bottom:14px; color:var(--text); font-size:12px;">
+      <label class="flabel" style="display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:7px;">...albo wklej treść ręcznie</label>
+      <textarea id="importJsonManualTextarea" placeholder="Wklej tutaj zawartość pliku JSON..."></textarea>
+      <div class="modal-hint">Jeśli wybór pliku nie zadziała w tej przeglądarce/aplikacji, wklej tutaj treść wyeksportowanego wcześniej pliku JSON zamiast tego.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="importJsonManualModal">Anuluj</button>
+      <button id="btnDoImportJsonManual">Importuj wklejony tekst</button>
+    </div>
+  </div>
+</div>
+
+<script>
+(function(){
+  'use strict';
+
+  // ============================================================
+  // BLOCK TYPE REGISTRY
+  // Each entry defines: category (color/behavior group), label template
+  // (with {paramName} placeholders), params (editable fields), whether it's
+  // a container (has nested child blocks), and how to generate Skript code.
+  // ============================================================
+  const CATS = {
+    event:     { label: 'Eventy',        color: 'var(--cat-event)' },
+    control:   { label: 'Kontrola',      color: 'var(--cat-control)' },
+    condition: { label: 'Warunki',       color: 'var(--cat-condition)' },
+    var:       { label: 'Zmienne',       color: 'var(--cat-var)' },
+    action:    { label: 'Akcje',         color: 'var(--cat-action)' },
+    misc:      { label: 'Inne',          color: 'var(--cat-misc)' },
+  };
+
+  // param types: 'text' (free text input), 'select' (dropdown with options)
+  const BLOCK_TYPES = {
+
+    // ---------------- EVENTS (top-level containers) ----------------
+    command: {
+      cat: 'event', container: true,
+      label: 'command /{name}:',
+      params: { name: { type: 'text', default: 'menu' } },
+      code: (p) => `command /${p.name || 'command'}:\ntrigger:`,
+      codeIndentChildrenExtra: 1, // children go one level deeper than the "trigger:" line itself
+    },
+    on_join: {
+      cat: 'event', container: true,
+      label: 'on join:',
+      params: {},
+      code: () => `on join:`,
+    },
+    on_quit: {
+      cat: 'event', container: true,
+      label: 'on quit:',
+      params: {},
+      code: () => `on quit:`,
+    },
+    on_death: {
+      cat: 'event', container: true,
+      label: 'on death:',
+      params: {},
+      code: () => `on death:`,
+    },
+    on_respawn: {
+      cat: 'event', container: true,
+      label: 'on respawn:',
+      params: {},
+      code: () => `on respawn:`,
+    },
+    on_click: {
+      cat: 'event', container: true,
+      label: 'on {clickType}:',
+      params: { clickType: { type: 'select', options: ['right click', 'left click', 'click'], default: 'right click' } },
+      code: (p) => `on ${p.clickType}:`,
+    },
+    on_inventory_click: {
+      cat: 'event', container: true,
+      label: 'on inventory click:',
+      params: {},
+      code: () => `on inventory click:`,
+    },
+    on_inventory_open: {
+      cat: 'event', container: true,
+      label: 'on inventory open:',
+      params: {},
+      code: () => `on inventory open:`,
+    },
+    on_inventory_drag: {
+      cat: 'event', container: true,
+      label: 'on inventory drag:',
+      params: {},
+      code: () => `on inventory drag:`,
+    },
+    function_def: {
+      cat: 'event', container: true,
+      label: 'function {name}({params}):',
+      params: {
+        name: { type: 'text', default: 'myFunction' },
+        params: { type: 'text', default: '' },
+      },
+      code: (p) => `function ${p.name || 'myFunction'}(${p.params || ''}):`,
+    },
+    every_x_ticks: {
+      cat: 'event', container: true,
+      label: 'co {interval} (pętla cykliczna):',
+      params: { interval: { type: 'text', default: '4 ticks' } },
+      code: (p) => `every ${p.interval || '1 second'}:`,
+    },
+
+    // ---------------- CONTROL FLOW ----------------
+    if_block: {
+      cat: 'control', container: true, hasConditionSlot: true,
+      label: 'jeśli {condition}:',
+      params: { condition: { type: 'text', default: '' } },
+      code: (p) => `if ${p.condition || '/* uzupełnij warunek */'}:`,
+    },
+    else_block: {
+      cat: 'control', container: true,
+      label: 'w przeciwnym razie:',
+      params: {},
+      code: () => `else:`,
+    },
+    else_if_block: {
+      cat: 'control', container: true, hasConditionSlot: true,
+      label: 'w przeciwnym razie jeśli {condition}:',
+      params: { condition: { type: 'text', default: '' } },
+      code: (p) => `else if ${p.condition || '/* uzupełnij warunek */'}:`,
+    },
+    loop_block: {
+      cat: 'control', container: true,
+      label: 'dla każdego {item} z {list}:',
+      params: {
+        item: { type: 'text', default: 'player' },
+        list: { type: 'text', default: 'all players' },
+      },
+      code: (p) => `loop ${p.list || 'all players'}:`,
+    },
+    while_block: {
+      cat: 'control', container: true, hasConditionSlot: true,
+      label: 'dopóki {condition}:',
+      params: { condition: { type: 'text', default: '' } },
+      code: (p) => `while ${p.condition || '/* uzupełnij warunek */'}:`,
+    },
+    wait_block: {
+      cat: 'control', container: false,
+      label: 'poczekaj {duration}',
+      params: { duration: { type: 'text', default: '1 second' } },
+      code: (p) => `wait ${p.duration || '1 second'}`,
+    },
+    stop_trigger: {
+      cat: 'control', container: false,
+      label: 'zatrzymaj trigger',
+      params: {},
+      code: () => `stop trigger`,
+    },
+    exit_trigger: {
+      cat: 'control', container: false,
+      label: 'wyjdź z funkcji (exit trigger)',
+      params: {},
+      code: () => `exit trigger`,
+    },
+    cancel_event: {
+      cat: 'control', container: false,
+      label: 'anuluj event',
+      params: {},
+      code: () => `cancel event`,
+    },
+    return_block: {
+      cat: 'control', container: false,
+      label: 'zwróć {value}',
+      params: { value: { type: 'text', default: '' } },
+      code: (p) => `return${p.value ? ' ' + p.value : ''}`,
+    },
+
+    // ---------------- VARIABLES ----------------
+    set_var: {
+      cat: 'var', container: false,
+      label: 'ustaw {var} na {value}',
+      params: {
+        var: { type: 'text', default: '{_result}' },
+        value: { type: 'text', default: '""' },
+      },
+      code: (p) => `set ${p.var || '{_var}'} to ${p.value || '""'}`,
+    },
+    add_var: {
+      cat: 'var', container: false,
+      label: 'dodaj {value} do {var}',
+      params: {
+        value: { type: 'text', default: '1' },
+        var: { type: 'text', default: '{_count}' },
+      },
+      code: (p) => `add ${p.value || '1'} to ${p.var || '{_var}'}`,
+    },
+    remove_var: {
+      cat: 'var', container: false,
+      label: 'odejmij {value} od {var}',
+      params: {
+        value: { type: 'text', default: '1' },
+        var: { type: 'text', default: '{_count}' },
+      },
+      code: (p) => `remove ${p.value || '1'} from ${p.var || '{_var}'}`,
+    },
+    delete_var: {
+      cat: 'var', container: false,
+      label: 'usuń {var}',
+      params: { var: { type: 'text', default: '{_var}' } },
+      code: (p) => `delete ${p.var || '{_var}'}`,
+    },
+
+    // ---------------- ACTIONS ----------------
+    send_message: {
+      cat: 'action', container: false,
+      label: 'wyślij wiadomość {message} do {target}',
+      params: {
+        message: { type: 'text', default: '"&aWitaj!"' },
+        target: { type: 'text', default: 'player' },
+      },
+      code: (p) => `send ${p.message || '""'} to ${p.target || 'player'}`,
+    },
+    broadcast: {
+      cat: 'action', container: false,
+      label: 'ogłoś {message}',
+      params: { message: { type: 'text', default: '"&6Ogłoszenie!"' } },
+      code: (p) => `broadcast ${p.message || '""'}`,
+    },
+    console_command: {
+      cat: 'action', container: false,
+      label: 'wykonaj komendę konsoli {command}',
+      params: { command: { type: 'text', default: 'give %player% diamond 1' } },
+      code: (p) => `execute console command "${(p.command||'').replace(/"/g,'""')}"`,
+    },
+    player_command: {
+      cat: 'action', container: false,
+      label: 'wykonaj komendę gracza {command}',
+      params: { command: { type: 'text', default: 'spawn' } },
+      code: (p) => `execute player command "${(p.command||'').replace(/"/g,'""')}"`,
+    },
+    teleport: {
+      cat: 'action', container: false,
+      label: 'teleportuj {target} do {location}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        location: { type: 'text', default: 'spawn of world "world"' },
+      },
+      code: (p) => `teleport ${p.target || 'player'} to ${p.location || 'spawn'}`,
+    },
+    give_item: {
+      cat: 'action', container: false,
+      label: 'daj {amount}x {item} graczowi {target}',
+      params: {
+        amount: { type: 'text', default: '1' },
+        item: { type: 'text', default: 'diamond' },
+        target: { type: 'text', default: 'player' },
+      },
+      code: (p) => `give ${p.amount || '1'} of ${p.item || 'stone'} to ${p.target || 'player'}`,
+    },
+    open_gui: {
+      cat: 'action', container: false,
+      label: 'otwórz GUI: {rows} rzędów, tytuł {title}',
+      params: {
+        rows: { type: 'text', default: '3' },
+        title: { type: 'text', default: '"&8Menu"' },
+      },
+      code: (p) => `open chest inventory with ${p.rows || '3'} rows named ${p.title || '""'} to player`,
+    },
+    close_inventory: {
+      cat: 'action', container: false,
+      label: 'zamknij ekwipunek gracza',
+      params: {},
+      code: () => `close player's inventory`,
+    },
+    set_slot: {
+      cat: 'action', container: false,
+      label: 'ustaw slot {slot} na {item}, lore: {lore}',
+      params: {
+        slot: { type: 'text', default: '0' },
+        item: { type: 'text', default: 'diamond_sword named "&bMiecz"' },
+        lore: { type: 'text', default: '' },
+      },
+      code: (p) => {
+        let out = `set slot ${p.slot || '0'} of player's current inventory to ${p.item || 'stone'}`;
+        if (p.lore && p.lore.trim()){
+          // multiple lore lines are separated by || in the input field, joined with "and" as
+          // Skript expects for a list of text values in a "with lore" clause
+          const lines = p.lore.split('||').map(s => s.trim()).filter(Boolean);
+          if (lines.length) out += ` with lore ${lines.join(' and ')}`;
+        }
+        return out;
+      },
+    },
+    heal_player: {
+      cat: 'action', container: false,
+      label: 'ulecz gracza {target}',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `heal ${p.target || 'player'}`,
+    },
+    kill_player: {
+      cat: 'action', container: false,
+      label: 'zabij {target}',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `kill ${p.target || 'player'}`,
+    },
+    grant_permission: {
+      cat: 'action', container: false,
+      label: 'nadaj graczowi {target} permission {perm} (LuckPerms)',
+      params: {
+        target: { type: 'text', default: '%player%' },
+        perm: { type: 'text', default: 'cosmetics.flame' },
+      },
+      code: (p) => `execute console command "lp user ${p.target || '%player%'} permission set ${p.perm || 'perm.node'} true"`,
+    },
+    remove_permission: {
+      cat: 'action', container: false,
+      label: 'odbierz graczowi {target} permission {perm} (LuckPerms)',
+      params: {
+        target: { type: 'text', default: '%player%' },
+        perm: { type: 'text', default: 'cosmetics.flame' },
+      },
+      code: (p) => `execute console command "lp user ${p.target || '%player%'} permission unset ${p.perm || 'perm.node'}"`,
+    },
+    draw_particle: {
+      cat: 'action', container: false,
+      label: 'narysuj {amount} cząsteczek {particle} przy {entity}',
+      params: {
+        amount: { type: 'text', default: '10' },
+        particle: { type: 'text', default: 'flame' },
+        entity: { type: 'text', default: 'player' },
+      },
+      code: (p) => `draw ${p.amount || '10'} ${p.particle || 'flame'} particles at ${p.entity || 'player'}`,
+    },
+    play_sound: {
+      cat: 'action', container: false,
+      label: 'odtwórz dźwięk {sound} dla {target} (głośność {volume})',
+      params: {
+        sound: { type: 'text', default: 'entity.player.levelup' },
+        target: { type: 'text', default: 'player' },
+        volume: { type: 'text', default: '1' },
+      },
+      code: (p) => `play sound "${p.sound || 'entity.player.levelup'}" with volume ${p.volume || '1'} to ${p.target || 'player'}`,
+    },
+    apply_potion_effect: {
+      cat: 'action', container: false,
+      label: 'daj {target} efekt {effect} poziom {amplifier} na {duration}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        effect: { type: 'text', default: 'speed' },
+        amplifier: { type: 'text', default: '1' },
+        duration: { type: 'text', default: '10 seconds' },
+      },
+      code: (p) => `apply potion of ${p.effect || 'speed'} ${p.amplifier || '1'} to ${p.target || 'player'} for ${p.duration || '10 seconds'}`,
+    },
+    remove_potion_effect: {
+      cat: 'action', container: false,
+      label: 'usuń z {target} efekt {effect}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        effect: { type: 'text', default: 'speed' },
+      },
+      code: (p) => `remove ${p.effect || 'speed'} from ${p.target || 'player'}`,
+    },
+    send_title: {
+      cat: 'action', container: false,
+      label: 'pokaż {target} tytuł {title} i podtytuł {subtitle}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        title: { type: 'text', default: '"&6Witaj!"' },
+        subtitle: { type: 'text', default: '""' },
+      },
+      code: (p) => `send title ${p.title || '""'} with subtitle ${p.subtitle || '""'} to ${p.target || 'player'}`,
+    },
+    send_actionbar: {
+      cat: 'action', container: false,
+      label: 'pokaż {target} actionbar {message}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        message: { type: 'text', default: '"&aPunkty: 100"' },
+      },
+      code: (p) => `send ${p.message || '""'} to ${p.target || 'player'} using action bar`,
+    },
+    feed_player: {
+      cat: 'action', container: false,
+      label: 'nakarm {target} (głód i nasycenie na maksa)',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `set ${p.target || 'player'}'s food level to 20`,
+    },
+    set_weather: {
+      cat: 'action', container: false,
+      label: 'ustaw pogodę na {weather} w świecie {world}',
+      params: {
+        weather: { type: 'select', options: ['clear', 'rainy', 'thundering'], default: 'clear' },
+        world: { type: 'text', default: 'world' },
+      },
+      code: (p) => `set weather in world "${p.world || 'world'}" to ${p.weather || 'clear'}`,
+    },
+    set_time: {
+      cat: 'action', container: false,
+      label: 'ustaw czas na {time} w świecie {world}',
+      params: {
+        time: { type: 'text', default: 'day' },
+        world: { type: 'text', default: 'world' },
+      },
+      code: (p) => `set time in world "${p.world || 'world'}" to ${p.time || 'day'}`,
+    },
+    strike_lightning: {
+      cat: 'action', container: false,
+      label: 'uderz piorunem w {location} (bez obrażeń)',
+      params: { location: { type: 'text', default: "player's location" } },
+      code: (p) => `strike lightning effect at ${p.location || "player's location"}`,
+    },
+    create_explosion: {
+      cat: 'action', container: false,
+      label: 'stwórz eksplozję o sile {power} w {location}',
+      params: {
+        power: { type: 'text', default: '2' },
+        location: { type: 'text', default: "player's location" },
+      },
+      code: (p) => `create explosion with force ${p.power || '2'} at ${p.location || "player's location"}`,
+    },
+    set_scoreboard_line: {
+      cat: 'action', container: false,
+      label: 'ustaw linię {line} scoreboardu {target} na {text}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        line: { type: 'text', default: '1' },
+        text: { type: 'text', default: '"&7Punkty: &a100"' },
+      },
+      code: (p) => `set line ${p.line || '1'} of ${p.target || 'player'}'s sidebar to ${p.text || '""'}`,
+    },
+
+    // ---------------- MISC ----------------
+    comment: {
+      cat: 'misc', container: false,
+      label: '# {text}',
+      params: { text: { type: 'text', default: 'komentarz' } },
+      code: (p) => `# ${p.text || ''}`,
+    },
+    call_function: {
+      cat: 'action', container: false, dynamicParams: true,
+      label: 'wywołaj funkcję {functionName}({args})',
+      params: {
+        functionName: { type: 'text', default: '' },
+        args: { type: 'text', default: '' }, // comma-separated argument values, kept in sync with the chosen function's signature by the dynamic renderer
+      },
+      code: (p) => `${p.functionName || 'myFunction'}(${p.args || ''})`,
+    },
+    raw_code: {
+      cat: 'misc', container: false,
+      label: 'surowy kod: {code}',
+      params: { code: { type: 'text', default: '' } },
+      code: (p) => `${p.code || ''}`,
+    },
+  };
+
+  // ============================================================
+  // TEMPLATES — complete, ready-to-use block trees for common patterns,
+  // built from confirmed-working syntax found across the user's real
+  // projects (banmenu.sk, szafka.sk, battlepass.sk, backupmenu.sk). Each
+  // template is a function returning a fresh block tree (via
+  // createBlockInstance, so ids are always newly generated) rather than a
+  // static object, since the same template can be inserted more than once.
+  // Defined after BLOCK_TYPES (so createBlockInstance/BLOCK_TYPES already
+  // exist) and before CONDITION_TYPES (order doesn't matter functionally,
+  // this just keeps related registries grouped together).
+  // ============================================================
+  function makeBlock(type, params, children, conditionText){
+    const b = createBlockInstance(type);
+    if (!b) return null;
+    if (params) Object.assign(b.params, params);
+    if (children) b.children = children;
+    if (conditionText !== undefined) b.conditionBlock = makeCondition(conditionText);
+    return b;
+  }
+
+  // Builds a ready-made condition-block (using the "custom_condition" puzzle piece, which
+  // accepts any free text) to pre-fill a template's condition slot — so templates ship with a
+  // real, editable condition block already in place instead of leaving the slot empty or (the
+  // bug this fixes) setting a plain-text params.condition that the UI no longer has any input
+  // for, since condition slots only accept dropped blocks now.
+  function makeCondition(text){
+    const cond = createConditionInstance('custom_condition');
+    cond.params.text = text;
+    return cond;
+  }
+
+  const TEMPLATES = {
+    gui_menu_basic: {
+      label: 'Menu GUI (otwieranie + obsługa kliknięć)',
+      desc: 'Komenda otwierająca GUI, plus on inventory click z anulowaniem, blokadą shift-clicka i on inventory drag — sprawdzony wzorzec z banmenu.sk/portfel.sk.',
+      build: () => [
+        makeBlock('command', { name: 'menu' }, [
+          makeBlock('open_gui', { rows: '3', title: '"&8Menu"' }),
+          makeBlock('wait_block', { duration: '1 tick' }),
+          makeBlock('set_slot', { slot: '13', item: 'diamond named "&bPrzykładowy przedmiot"', lore: '"&7Kliknij mnie"' }),
+        ]),
+        makeBlock('on_inventory_click', {}, [
+          makeBlock('if_block', {}, [
+            makeBlock('cancel_event'),
+            makeBlock('if_block', {}, [
+              makeBlock('stop_trigger'),
+            ], '"%click type%" contains "SHIFT"'),
+            makeBlock('set_var', { var: '{_slot}', value: 'index of event-slot' }),
+            makeBlock('if_block', {}, [
+              makeBlock('send_message', { message: '"&aKliknąłeś przykładowy przedmiot!"' }),
+            ], '{_slot} is 13'),
+          ], 'unformatted name of event-inventory contains "Menu"'),
+        ]),
+        makeBlock('on_inventory_drag', {}, [
+          makeBlock('if_block', {}, [
+            makeBlock('cancel_event'),
+          ], 'unformatted name of event-inventory contains "Menu"'),
+        ]),
+      ],
+    },
+
+    player_selector_gui: {
+      label: 'Selektor graczy (głowy graczy w GUI)',
+      desc: 'GUI z głowami wszystkich graczy online, klik otwiera kolejne menu dla wybranego gracza — wzorzec z backupmenu.sk/banmenu.sk (używa {_target}\'s skull, nie "player head of X").',
+      build: () => [
+        makeBlock('command', { name: 'wybierzgracza' }, [
+          makeBlock('open_gui', { rows: '6', title: '"&8Wybierz gracza"' }),
+          makeBlock('wait_block', { duration: '1 tick' }),
+          makeBlock('set_var', { var: '{_slot}', value: '0' }),
+          makeBlock('loop_block', { item: 'target', list: 'all players' }, [
+            makeBlock('if_block', {}, [
+              makeBlock('stop_trigger'),
+            ], '{_slot} > 44'),
+            makeBlock('set_slot', { slot: '{_slot}', item: "loop-player's skull named \"&6%loop-player%\"", lore: '"&7Kliknij, aby wybrać"' }),
+            makeBlock('set_var', { var: '{sel::slot::%player%::%{_slot}%}', value: 'loop-player' }),
+            makeBlock('add_var', { value: '1', var: '{_slot}' }),
+          ]),
+        ]),
+        makeBlock('on_inventory_click', {}, [
+          makeBlock('if_block', {}, [
+            makeBlock('cancel_event'),
+            makeBlock('set_var', { var: '{_slot}', value: 'index of event-slot' }),
+            makeBlock('if_block', {}, [
+              makeBlock('set_var', { var: '{_target}', value: '{sel::slot::%player%::%{_slot}%}' }),
+              makeBlock('send_message', { message: '"&aWybrano: %{_target}%"' }),
+            ], '{sel::slot::%player%::%{_slot}%} is set'),
+          ], 'unformatted name of event-inventory contains "Wybierz gracza"'),
+        ]),
+      ],
+    },
+
+    cosmetic_particle_toggle: {
+      label: 'Toggle kosmetycznych cząsteczek (permission-gated)',
+      desc: 'Komenda włączająca/wyłączająca particle trail za graczem, sprawdzająca permission cosmetics.<efekt> — wzorzec ze szafka.sk (jednowyrazowa nazwa cząsteczki, cel jako encja nie lokacja).',
+      build: () => [
+        makeBlock('command', { name: 'efekt' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('if_block', {}, [
+              makeBlock('set_var', { var: '{cosmetics::active::%player%}', value: 'false' }),
+              makeBlock('send_message', { message: '"&cWyłączono efekt cząsteczek."' }),
+            ], '{cosmetics::active::%player%} is true'),
+            makeBlock('else_block', {}, [
+              makeBlock('set_var', { var: '{cosmetics::active::%player%}', value: 'true' }),
+              makeBlock('send_message', { message: '"&aWłączono efekt cząsteczek!"' }),
+            ]),
+          ], 'player has permission "cosmetics.flame"'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz uprawnień do tego efektu."' }),
+          ]),
+        ]),
+        makeBlock('every_x_ticks', { interval: '4 ticks' }, [
+          makeBlock('loop_block', { item: 'p', list: 'all players' }, [
+            makeBlock('if_block', {}, [
+              makeBlock('draw_particle', { amount: '3', particle: 'flame', entity: 'loop-player' }),
+            ], '{cosmetics::active::%loop-player%} is true'),
+          ]),
+        ]),
+      ],
+    },
+
+    permission_grant_command: {
+      label: 'Komenda nadająca rangę/permisję (LuckPerms)',
+      desc: 'Komenda admina nadająca permission przez LuckPerms — wzorzec permission-scoped z battlepass.sk (<projekt>.<perm>, np. battlepass.vip).',
+      build: () => [
+        makeBlock('command', { name: 'nadajvip' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('grant_permission', { target: '%arg-1%', perm: 'battlepass.vip' }),
+            makeBlock('send_message', { message: '"&aNadano VIP graczowi %arg-1%."' }),
+          ], 'player has permission "enchant.admin"'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz uprawnień do tej komendy."' }),
+          ]),
+        ]),
+      ],
+    },
+
+    join_quit_broadcast: {
+      label: 'Powitanie/pożegnanie gracza',
+      desc: 'on join / on quit z broadcastem — pamiętaj, że broadcast bywa niewiarygodny dla kolorów, więc używa loop all players + send do loop-player zamiast samego broadcast.',
+      build: () => [
+        makeBlock('on_join', {}, [
+          makeBlock('loop_block', { item: 'p', list: 'all players' }, [
+            makeBlock('send_message', { message: '"&a%player% dołączył do serwera!"', target: 'loop-player' }),
+          ]),
+        ]),
+        makeBlock('on_quit', {}, [
+          makeBlock('loop_block', { item: 'p', list: 'all players' }, [
+            makeBlock('send_message', { message: '"&c%player% opuścił serwer."', target: 'loop-player' }),
+          ]),
+        ]),
+      ],
+    },
+
+    kit_command: {
+      label: 'Komenda /kit (z cooldownem)',
+      desc: 'Daje graczowi zestaw przedmiotów, z permisją i cooldownem opartym o zmienną czasową — użyj bloku "minęło [X] od [zmienna]" żeby ustawić czas odnowienia.',
+      build: () => [
+        makeBlock('command', { name: 'kit' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('give_item', { amount: '1', item: 'diamond sword', target: 'player' }),
+            makeBlock('give_item', { amount: '5', item: 'golden apple', target: 'player' }),
+            makeBlock('set_var', { var: '{kit::%player%}', value: 'now' }),
+            makeBlock('send_message', { message: '"&aOdebrano zestaw!"' }),
+          ], 'player has permission "enchant.kit"'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz uprawnień do tego zestawu."' }),
+          ]),
+        ]),
+      ],
+    },
+
+    shop_purchase: {
+      label: 'Prosty zakup w sklepie (Vault)',
+      desc: 'Komenda kupująca przedmiot za walutę, sprawdza saldo przed odjęciem — wzorzec z użyciem economy expression (Vault).',
+      build: () => [
+        makeBlock('command', { name: 'kup' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('remove_var', { value: '100', var: "player's balance" }),
+            makeBlock('give_item', { amount: '1', item: 'diamond', target: 'player' }),
+            makeBlock('send_message', { message: '"&aKupiono diament za 100!"' }),
+          ], "player's balance >= 100"),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz wystarczająco pieniędzy."' }),
+          ]),
+        ]),
+      ],
+    },
+
+    home_warp_teleport: {
+      label: 'Komenda /home i /sethome',
+      desc: 'Zapisywanie i teleportacja do zapisanej lokacji gracza w zmiennej — podstawowy system domów bez pluginu.',
+      build: () => [
+        makeBlock('command', { name: 'sethome' }, [
+          makeBlock('set_var', { var: '{home::%player%}', value: "player's location" }),
+          makeBlock('send_message', { message: '"&aUstawiono dom w tym miejscu!"' }),
+        ]),
+        makeBlock('command', { name: 'home' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('teleport', { target: 'player', location: '{home::%player%}' }),
+            makeBlock('send_message', { message: '"&aTeleportowano do domu!"' }),
+          ], '{home::%player%} is set'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz jeszcze ustawionego domu — użyj /sethome."' }),
+          ]),
+        ]),
+      ],
+    },
+
+    kick_with_reason: {
+      label: 'Komenda /kick z powodem',
+      desc: 'Wyrzuca gracza z podanym powodem, sprawdza permisję admina — wzorzec argumentów komendy (%arg-1%, %arg-2% i dalej).',
+      build: () => [
+        makeBlock('command', { name: 'wyrzuc' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('console_command', { command: 'kick %arg-1% %arg-2%' }),
+            makeBlock('send_message', { message: '"&aWyrzucono gracza %arg-1%."' }),
+          ], 'player has permission "enchant.kick"'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz uprawnień do tej komendy."' }),
+          ]),
+        ]),
+      ],
+    },
+
+    custom_head_give: {
+      label: 'Daj graczowi custom głowę',
+      desc: 'Wzorzec dawania customowej głowy gracza (skin) — używa {_target}\'s skull, nie "player head of X" (potwierdzony błąd składni).',
+      build: () => [
+        makeBlock('command', { name: 'glowa' }, [
+          makeBlock('set_var', { var: '{_target}', value: '"%arg-1%" parsed as offline player' }),
+          makeBlock('if_block', {}, [
+            makeBlock('give_item', { amount: '1', item: "{_target}'s skull named \"&6Głowa gracza %{_target}%\"", target: 'player' }),
+            makeBlock('send_message', { message: '"&aOtrzymano głowę gracza %{_target}%!"' }),
+          ], '{_target} is set'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie znaleziono takiego gracza."' }),
+          ]),
+        ]),
+      ],
+    },
+
+    kill_death_stats: {
+      label: 'Licznik zabójstw i śmierci',
+      desc: 'on death zwiększa licznik śmierci ofiary i zabójstw zabójcy, wzorzec z bare "attacker"/"victim" (nie "attacker of event") potwierdzony z battlepass.sk.',
+      build: () => [
+        makeBlock('on_death', {}, [
+          makeBlock('add_var', { value: '1', var: '{deaths::%victim%}' }),
+          makeBlock('if_block', {}, [
+            makeBlock('add_var', { value: '1', var: '{kills::%attacker%}' }),
+            makeBlock('send_message', { message: '"&aZabiłeś %victim%! Zabójstwa: %{kills::%attacker%}%"', target: 'attacker' }),
+          ], 'attacker is set'),
+        ]),
+      ],
+    },
+
+    event_ping_broadcast: {
+      label: 'Ogłoszenie eventu z odliczaniem',
+      desc: 'Komenda admina ogłaszająca event wszystkim graczom, z odliczeniem czasu w komunikacie — wzorzec loop all players + send do loop-player zamiast broadcast.',
+      build: () => [
+        makeBlock('command', { name: 'ogloszevent' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('loop_block', { item: 'p', list: 'all players' }, [
+              makeBlock('send_message', { message: '"&6&l⚡ EVENT! &r&6Zaczyna się za %arg-1% minut! Dołącz przez /event"', target: 'loop-player' }),
+            ]),
+          ], 'player has permission "enchant.admin"'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz uprawnień do tej komendy."' }),
+          ]),
+        ]),
+      ],
+    },
+
+    random_reward: {
+      label: 'Losowa nagroda (skrzynka/koło fortuny)',
+      desc: 'Losuje jedną z kilku nagród z równymi szansami — wzorzec z losową liczbą i drzewem if/else if do przypisania nagrody.',
+      build: () => [
+        makeBlock('command', { name: 'losuj' }, [
+          makeBlock('set_var', { var: '{_roll}', value: 'a random integer between 1 and 3' }),
+          makeBlock('if_block', {}, [
+            makeBlock('give_item', { amount: '1', item: 'diamond', target: 'player' }),
+            makeBlock('send_message', { message: '"&bWylosowano: Diament!"' }),
+          ], '{_roll} is 1'),
+          makeBlock('else_if_block', {}, [
+            makeBlock('give_item', { amount: '5', item: 'iron ingot', target: 'player' }),
+            makeBlock('send_message', { message: '"&7Wylosowano: 5x Żelazo!"' }),
+          ], '{_roll} is 2'),
+          makeBlock('else_block', {}, [
+            makeBlock('give_item', { amount: '1', item: 'rotten flesh', target: 'player' }),
+            makeBlock('send_message', { message: '"&8Wylosowano: Zgniłe mięso... pech!"' }),
+          ]),
+        ]),
+      ],
+    },
+
+    info_sign_click: {
+      label: 'Tabliczka informacyjna (klik prawym)',
+      desc: 'Wyświetla wiadomość graczowi po kliknięciu prawym przyciskiem — podstawowy wzorzec interakcji ze światem, bez GUI.',
+      build: () => [
+        makeBlock('on_click', { clickType: 'right click' }, [
+          makeBlock('send_message', { message: '"&e&l📜 Informacja: &r&eWitaj na serwerze Enchant SMP!"' }),
+        ]),
+      ],
+    },
+
+    temp_mute_command: {
+      label: 'Komenda /mute z czasem trwania',
+      desc: 'Wycisza gracza na podany czas (zapisany jako zmienna z datą końca) — wzorzec moderacyjny z banmenu.sk, z permisją admina.',
+      build: () => [
+        makeBlock('command', { name: 'wycisz' }, [
+          makeBlock('if_block', {}, [
+            makeBlock('set_var', { var: '{muted::%arg-1%}', value: 'true' }),
+            makeBlock('set_var', { var: '{muteend::%arg-1%}', value: 'now + %arg-2%' }),
+            makeBlock('send_message', { message: '"&aWyciszono gracza %arg-1% na %arg-2%."' }),
+          ], 'player has permission "enchant.mute"'),
+          makeBlock('else_block', {}, [
+            makeBlock('send_message', { message: '"&cNie masz uprawnień do tej komendy."' }),
+          ]),
+        ]),
+      ],
+    },
+  };
+
+  // ============================================================
+  // CONDITION TYPES
+  // Small "puzzle piece" blocks that fit into an if/while/else-if's condition
+  // slot, instead of typing the whole condition as free text. Each one has
+  // its own code() that returns just the condition expression text (no
+  // trailing ":"), since the containing if/while/else-if block adds that
+  // itself. AND/OR are special: they're containers for exactly two nested
+  // condition slots, letting people build compound conditions visually
+  // instead of typing "X and Y" by hand — which also sidesteps the confirmed
+  // real bug where "if X or Y:" on one line fails to parse in this Skript
+  // version (the AND/OR block generates it correctly split if needed, see
+  // generateConditionCode below).
+  // ============================================================
+  const CONDITION_TYPES = {
+    has_permission: {
+      label: '{target} ma permisję {perm}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        perm: { type: 'text', default: 'enchant.vip' },
+      },
+      code: (p) => `${p.target || 'player'} has permission "${p.perm || 'perm'}"`,
+    },
+    is_op: {
+      label: '{target} jest opem',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `${p.target || 'player'} is op`,
+    },
+    var_equals: {
+      label: '{var} równa się {value}',
+      params: {
+        var: { type: 'text', default: '{_var}' },
+        value: { type: 'text', default: '1' },
+      },
+      code: (p) => `${p.var || '{_var}'} is ${p.value || '""'}`,
+    },
+    var_not_equals: {
+      label: '{var} nie równa się {value}',
+      params: {
+        var: { type: 'text', default: '{_var}' },
+        value: { type: 'text', default: '1' },
+      },
+      code: (p) => `${p.var || '{_var}'} is not ${p.value || '""'}`,
+    },
+    var_greater: {
+      label: '{var} większe niż {value}',
+      params: {
+        var: { type: 'text', default: '{_var}' },
+        value: { type: 'text', default: '0' },
+      },
+      code: (p) => `${p.var || '{_var}'} > ${p.value || '0'}`,
+    },
+    var_less: {
+      label: '{var} mniejsze niż {value}',
+      params: {
+        var: { type: 'text', default: '{_var}' },
+        value: { type: 'text', default: '0' },
+      },
+      code: (p) => `${p.var || '{_var}'} < ${p.value || '0'}`,
+    },
+    var_set: {
+      label: '{var} jest ustawiona',
+      params: { var: { type: 'text', default: '{_var}' } },
+      code: (p) => `${p.var || '{_var}'} is set`,
+    },
+    slot_is: {
+      label: 'kliknięty slot to {slot}',
+      params: { slot: { type: 'text', default: '0' } },
+      code: (p) => `{_slot} is ${p.slot || '0'}`,
+    },
+    gui_name_contains: {
+      label: 'nazwa GUI zawiera {title}',
+      params: { title: { type: 'text', default: '"Menu"' } },
+      code: (p) => `unformatted name of event-inventory contains ${p.title || '""'}`,
+    },
+    custom_condition: {
+      label: 'inny warunek (własny tekst): {text}',
+      params: { text: { type: 'text', default: '' } },
+      code: (p) => `${p.text || 'true'}`,
+    },
+    has_rank: {
+      label: '{target} ma rangę (grupę) {group}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        group: { type: 'text', default: 'vip' },
+      },
+      code: (p) => `${p.target || 'player'} has permission "group.${p.group || 'default'}"`,
+    },
+    has_item_in_hand: {
+      label: '{target} trzyma w ręce {item}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        item: { type: 'text', default: 'diamond sword' },
+      },
+      code: (p) => `${p.target || 'player'}'s tool is ${p.item || 'air'}`,
+    },
+    has_amount_of_item: {
+      label: '{target} ma co najmniej {amount}x {item}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '1' },
+        item: { type: 'text', default: 'diamond' },
+      },
+      code: (p) => `${p.target || 'player'} has ${p.amount || '1'} of ${p.item || 'stone'}`,
+    },
+    inventory_full: {
+      label: 'ekwipunek gracza {target} jest pełny',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `${p.target || 'player'}'s inventory is full`,
+    },
+    health_below: {
+      label: '{target} ma poniżej {amount} zdrowia',
+      params: {
+        target: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '10' },
+      },
+      code: (p) => `${p.target || 'player'}'s health < ${p.amount || '10'}`,
+    },
+    is_sneaking: {
+      label: '{target} kuca',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `${p.target || 'player'} is sneaking`,
+    },
+    is_flying: {
+      label: '{target} lata',
+      params: { target: { type: 'text', default: 'player' } },
+      code: (p) => `${p.target || 'player'} is flying`,
+    },
+    is_in_world: {
+      label: '{target} jest w świecie {world}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        world: { type: 'text', default: 'world' },
+      },
+      code: (p) => `${p.target || 'player'} is in world "${p.world || 'world'}"`,
+    },
+    is_online: {
+      label: '{target} jest online',
+      params: { target: { type: 'text', default: '"%arg-1%" parsed as offline player' } },
+      code: (p) => `${p.target || 'player'} is online`,
+    },
+    game_mode_is: {
+      label: 'tryb gry {target} to {mode}',
+      params: {
+        target: { type: 'text', default: 'player' },
+        mode: { type: 'select', options: ['survival', 'creative', 'adventure', 'spectator'], default: 'survival' },
+      },
+      code: (p) => `${p.target || 'player'}'s gamemode is ${p.mode || 'survival'}`,
+    },
+    cooldown_passed: {
+      label: 'minęło {duration} od {var} (puste/0 = zawsze dozwolone)',
+      params: {
+        duration: { type: 'text', default: '10s' },
+        var: { type: 'text', default: '{cd::%player%}' },
+      },
+      // Empty or "0d"/"0s"/"0" duration means "no cooldown, always allowed". Deliberately does
+      // NOT use "{_var} is not set or difference ... > duration" even though it reads as a single
+      // expression rather than a bare "if X or Y:" — the confirmed real bug is specifically about
+      // "or" appearing anywhere in an if/while header line on this Skript version, and this editor
+      // treats that as unsafe to risk regardless of how the "or" is nested grammatically. If you
+      // need the "not set" safety check too, combine this with a "zmienna jest ustawiona" block
+      // using the ORAZ/LUB combinator pieces instead, which generate proper separate branches.
+      code: (p) => {
+        const dur = (p.duration || '').trim();
+        const isAlways = !dur || /^0(d|s|m|h|t|ticks?)?$/.test(dur);
+        if (isAlways) return `true`;
+        return `difference between now and ${p.var || '{_var}'} > ${dur}`;
+      },
+    },
+    price_at_least: {
+      label: '{target} ma co najmniej {amount} waluty (Vault)',
+      params: {
+        target: { type: 'text', default: 'player' },
+        amount: { type: 'text', default: '100' },
+      },
+      code: (p) => `${p.target || 'player'}'s balance >= ${p.amount || '0'}`,
+    },
+    arg_is_number: {
+      label: 'argument {argnum} jest liczbą',
+      params: { argnum: { type: 'text', default: '1' } },
+      code: (p) => `arg-${p.argnum || '1'} is a number`,
+    },
+    arg_not_set: {
+      label: 'argument {argnum} nie jest podany',
+      params: { argnum: { type: 'text', default: '1' } },
+      code: (p) => `arg-${p.argnum || '1'} is not set`,
+    },
+    entity_is_type: {
+      label: '{target} jest typu {type}',
+      params: {
+        target: { type: 'text', default: 'event-entity' },
+        type: { type: 'text', default: 'a zombie' },
+      },
+      code: (p) => `${p.target || 'event-entity'} is ${p.type || 'a player'}`,
+    },
+    // AND/OR are containers with exactly two condition "slots" instead of a params list — each
+    // slot holds one nested condition block (which can itself be another AND/OR, for 3+ terms).
+    and_combo: {
+      label: '{left} ORAZ {right}',
+      isCombinator: true,
+      params: {},
+      // code() isn't used directly for combinators — see generateConditionCode, which knows how
+      // to flatten AND/OR combinators into either "X and Y" (single-branch case) or split
+      // separate if/else-if branches (the confirmed-necessary workaround for "or" on one line).
+    },
+    or_combo: {
+      label: '{left} LUB {right}',
+      isCombinator: true,
+      params: {},
+    },
+  };
+
+  // Order categories appear in the palette
+  const CAT_ORDER = ['event', 'control', 'var', 'action', 'misc'];
+
+  // ============================================================
+  // STATE: the block tree. Each block instance is
+  // { id, type, params: {...}, children: [] }
+  // The root is a plain array of top-level blocks (state.root).
+  // ============================================================
+  let idCounter = 1;
+  function nextId(){ return 'b' + (idCounter++); }
+
+  const state = {
+    root: [],
+    targetContainerId: null, // null = root; otherwise the id of a container block to append into (tap-to-add mode)
+  };
+
+  function createBlockInstance(typeKey){
+    const def = BLOCK_TYPES[typeKey];
+    if (!def) return null;
+    const params = {};
+    Object.entries(def.params || {}).forEach(([key, spec]) => { params[key] = spec.default || ''; });
+    return { id: nextId(), type: typeKey, params, children: def.container ? [] : undefined };
+  }
+
+  // Finds a block by id anywhere in the tree, along with its containing array and index —
+  // used for move/delete operations. Returns null if not found.
+  function findBlockLocation(list, id){
+    for (let i = 0; i < list.length; i++){
+      if (list[i].id === id) return { list, index: i, block: list[i] };
+      if (list[i].children){
+        const found = findBlockLocation(list[i].children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  function removeBlockById(id){
+    const loc = findBlockLocation(state.root, id);
+    if (!loc) return null;
+    loc.list.splice(loc.index, 1);
+    return loc.block;
+  }
+
+  // Finds any block by id anywhere in the tree, without needing its parent list — used to look
+  // up the currently-selected target container's own block instance (for its label and for
+  // verifying it's still a valid container after edits/deletes elsewhere).
+  function findBlockById(list, id){
+    for (const block of list){
+      if (block.id === id) return block;
+      if (block.children){
+        const found = findBlockById(block.children, id);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // Scans the whole block tree for function_def blocks, returning each one's name and a parsed
+  // list of its parameter names (from Skript's "name: type, name2: type2" signature syntax) —
+  // used by call_function's dynamic UI to offer a dropdown of known functions and matching
+  // argument fields, instead of the user having to retype the function name and signature.
+  function findAllFunctionDefs(list){
+    let results = [];
+    for (const block of list){
+      if (block.type === 'function_def'){
+        const paramNames = (block.params.params || '')
+          .split(',')
+          .map(s => s.trim().split(':')[0].trim())
+          .filter(Boolean);
+        results.push({ name: block.params.name || 'myFunction', paramNames });
+      }
+      if (block.children){
+        results = results.concat(findAllFunctionDefs(block.children));
+      }
+    }
+    return results;
+  }
+
+  // Resolves the children-array a tap-added block should land in: either the root list (default,
+  // when targetContainerId is null) or the children of whichever container block was last tapped
+  // to select it. Falls back to root if the previously-selected container was deleted meanwhile.
+  function resolveTargetList(){
+    if (!state.targetContainerId) return state.root;
+    const block = findBlockById(state.root, state.targetContainerId);
+    if (!block || !block.children){
+      state.targetContainerId = null;
+      return state.root;
+    }
+    return block.children;
+  }
+
+  function addBlockToTargetContainer(typeKey){
+    const newBlock = createBlockInstance(typeKey);
+    if (!newBlock) return;
+    const targetList = resolveTargetList();
+    targetList.push(newBlock);
+    // If the block we just added can contain children (command, if, on join, etc.), select it
+    // as the new target automatically — otherwise the very next tap-added block would land as a
+    // sibling instead of nesting inside it, which is the #1 way this editor produces flat,
+    // wrongly-indented code instead of the intended nested structure.
+    const def = BLOCK_TYPES[typeKey];
+    if (def && def.container){
+      state.targetContainerId = newBlock.id;
+    }
+    renderWorkspace();
+    maybeSwitchToWorkspaceTab();
+  }
+
+  function selectTargetContainer(blockId){
+    state.targetContainerId = blockId;
+    renderWorkspace();
+  }
+
+  // Finds the first empty condition slot anywhere in the block tree (depth-first): either a
+  // block's own conditionBlock (for blocks with hasConditionSlot), or an empty left/right side of
+  // an AND/OR combinator nested inside one. Returns a setter function to fill that slot, or null
+  // if no empty slot exists anywhere.
+  function findFirstEmptyConditionSlotSetter(list){
+    for (const block of list){
+      const def = BLOCK_TYPES[block.type];
+      if (def && def.hasConditionSlot){
+        if (!block.conditionBlock){
+          return (newCond) => { block.conditionBlock = newCond; };
+        }
+        const nestedSetter = findEmptySlotInCondition(block.conditionBlock, (newCond) => { block.conditionBlock = newCond; });
+        if (nestedSetter) return nestedSetter;
+      }
+      if (block.children){
+        const found = findFirstEmptyConditionSlotSetter(block.children);
+        if (found) return found;
+      }
+    }
+    return null;
+  }
+
+  // Recurses into a single condition instance looking for an empty AND/OR side. replaceSelf lets
+  // the search report back "replace this whole condition" in the (impossible in practice, since
+  // we only call this when cond already exists) case the top-level cond itself needs replacing.
+  function findEmptySlotInCondition(cond, replaceSelf){
+    if (!cond) return replaceSelf;
+    const def = CONDITION_TYPES[cond.type];
+    if (!def || !def.isCombinator) return null;
+    if (!cond.left) return (newCond) => { cond.left = newCond; };
+    const leftFound = findEmptySlotInCondition(cond.left, (newCond) => { cond.left = newCond; });
+    if (leftFound) return leftFound;
+    if (!cond.right) return (newCond) => { cond.right = newCond; };
+    return findEmptySlotInCondition(cond.right, (newCond) => { cond.right = newCond; });
+  }
+
+  function addConditionToTargetSlot(condType){
+    const setter = findFirstEmptyConditionSlotSetter(state.root);
+    if (!setter){
+      alert('Brak pustego gniazda warunku w workspace. Najpierw dodaj blok "jeśli" / "dopóki" (z kategorii Kontrola), albo wyczyść istniejące gniazdo, żeby wstawić do niego nowy warunek.');
+      return;
+    }
+    const newCond = createConditionInstance(condType);
+    if (!newCond) return;
+    setter(newCond);
+    renderWorkspace();
+    maybeSwitchToWorkspaceTab();
+  }
+
+  function updateTargetContainerLabel(){
+    const nameEl = document.getElementById('targetContainerName');
+    const labelEl = document.getElementById('targetContainerLabel');
+    const isRoot = !state.targetContainerId || !findBlockById(state.root, state.targetContainerId);
+    if (isRoot){
+      nameEl.textContent = 'początek skryptu (poza jakimkolwiek eventem!)';
+    } else {
+      const block = findBlockById(state.root, state.targetContainerId);
+      const def = block ? BLOCK_TYPES[block.type] : null;
+      nameEl.textContent = def ? labelPreview(def) : 'początek skryptu';
+    }
+    labelEl.classList.toggle('is-root', isRoot);
+  }
+
+  // ============================================================
+  // PALETTE RENDERING
+  // ============================================================
+  function renderPalette(filterText){
+    const container = document.getElementById('paletteCategories');
+    container.innerHTML = '';
+    const filter = (filterText || '').trim().toLowerCase();
+
+    CAT_ORDER.forEach(catKey => {
+      const catDef = CATS[catKey];
+      const entries = Object.entries(BLOCK_TYPES).filter(([key, def]) => def.cat === catKey);
+      const visibleEntries = filter
+        ? entries.filter(([key, def]) => def.label.toLowerCase().includes(filter) || key.toLowerCase().includes(filter))
+        : entries;
+      if (filter && visibleEntries.length === 0) return;
+
+      const catEl = document.createElement('div');
+      catEl.className = 'palette-cat';
+      catEl.innerHTML = `
+        <div class="palette-cat-head">
+          <span class="dot" style="background:${catDef.color};"></span>
+          ${catDef.label}
+          <span class="chev">▾</span>
+        </div>
+        <div class="palette-items"></div>
+      `;
+      const itemsEl = catEl.querySelector('.palette-items');
+      visibleEntries.forEach(([key, def]) => {
+        const blockEl = document.createElement('div');
+        blockEl.className = 'palette-block';
+        blockEl.style.background = def.colorOverride || catDef.color;
+        blockEl.style.color = (catKey === 'event' || catKey === 'action' || catKey === 'misc') ? '#fff' : '#0d0d11';
+        blockEl.draggable = true;
+        blockEl.dataset.blockType = key;
+
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = labelPreview(def);
+        blockEl.appendChild(labelSpan);
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-btn';
+        addBtn.textContent = '+';
+        addBtn.title = 'Dodaj blok';
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          addBlockToTargetContainer(key);
+        });
+        blockEl.appendChild(addBtn);
+
+        itemsEl.appendChild(blockEl);
+      });
+      catEl.querySelector('.palette-cat-head').addEventListener('click', () => {
+        catEl.classList.toggle('collapsed');
+      });
+      container.appendChild(catEl);
+    });
+
+    // Condition palette section: separate from BLOCK_TYPES since these are puzzle-piece
+    // condition blocks meant to drop into an if/while/else-if's condition slot, not into the
+    // main block-list workspace.
+    const condEntries = Object.entries(CONDITION_TYPES);
+    const visibleCondEntries = filter
+      ? condEntries.filter(([key, def]) => def.label.toLowerCase().includes(filter) || key.toLowerCase().includes(filter))
+      : condEntries;
+    if (!filter || visibleCondEntries.length > 0){
+      const catEl = document.createElement('div');
+      catEl.className = 'palette-cat';
+      catEl.innerHTML = `
+        <div class="palette-cat-head">
+          <span class="dot" style="background:var(--cat-condition);"></span>
+          Warunki (do gniazd "jeśli")
+          <span class="chev">▾</span>
+        </div>
+        <div class="palette-items"></div>
+      `;
+      const itemsEl = catEl.querySelector('.palette-items');
+      visibleCondEntries.forEach(([key, def]) => {
+        const blockEl = document.createElement('div');
+        blockEl.className = 'palette-cond-block' + (def.isCombinator ? ' combo' : '');
+        blockEl.draggable = true;
+        blockEl.dataset.condType = key;
+
+        const labelSpan = document.createElement('span');
+        labelSpan.textContent = def.isCombinator ? labelPreview(def).replace('{left}', '_').replace('{right}', '_') : labelPreview(def);
+        blockEl.appendChild(labelSpan);
+
+        const addBtn = document.createElement('button');
+        addBtn.className = 'add-btn';
+        addBtn.textContent = '+';
+        addBtn.title = 'Dodaj do zaznaczonego gniazda warunku';
+        addBtn.addEventListener('click', (e) => {
+          e.stopPropagation();
+          addConditionToTargetSlot(key);
+        });
+        blockEl.appendChild(addBtn);
+
+        itemsEl.appendChild(blockEl);
+      });
+      catEl.querySelector('.palette-cat-head').addEventListener('click', () => {
+        catEl.classList.toggle('collapsed');
+      });
+      container.appendChild(catEl);
+    }
+
+    bindPaletteDragHandlers();
+  }
+
+  // Shows the block's label template with placeholder names visible (not yet filled with real
+  // values) so the palette entry is self-descriptive before the user drags it in.
+  function labelPreview(def){
+    return def.label.replace(/\{(\w+)\}/g, (m, name) => `[${name}]`);
+  }
+
+  // ============================================================
+  // WORKSPACE RENDERING
+  // Recursively renders a list of block instances into a container element.
+  // Each block shows its label with inline editable inputs for its params,
+  // and — for container block types — a nested block-list for children.
+  // ============================================================
+  function renderWorkspace(){
+    const rootList = document.getElementById('rootList');
+    rootList.innerHTML = '';
+    renderBlockList(state.root, rootList);
+    document.getElementById('emptyHint').style.display = state.root.length ? 'none' : 'block';
+    updateTargetContainerLabel();
+    renderCodeAndLint();
+  }
+
+  function renderBlockList(list, containerEl){
+    containerEl.innerHTML = '';
+    list.forEach(block => {
+      containerEl.appendChild(renderBlockEl(block));
+    });
+    bindListDropHandlers(list, containerEl);
+  }
+
+  // ============================================================
+  // CONDITION BLOCKS (puzzle pieces that drop into if/while/else-if slots)
+  // A condition instance is { id, type, params, left, right }. For normal
+  // conditions, left/right stay undefined. For and_combo/or_combo, left and
+  // right each hold a nested condition instance (or null if that slot is
+  // still empty) — this is how compound conditions get built visually.
+  // ============================================================
+  function createConditionInstance(typeKey){
+    const def = CONDITION_TYPES[typeKey];
+    if (!def) return null;
+    const params = {};
+    Object.entries(def.params || {}).forEach(([key, spec]) => { params[key] = spec.default || ''; });
+    const instance = { id: nextId(), type: typeKey, params };
+    if (def.isCombinator){ instance.left = null; instance.right = null; }
+    return instance;
+  }
+
+  // Renders the drop-zone slot for a block's "condition" param: shows the nested condition-block
+  // if one is present (block.conditionBlock), or an empty dashed placeholder plus the free-text
+  // fallback input otherwise.
+  function renderConditionSlot(block){
+    const slot = document.createElement('span');
+    slot.className = 'condition-slot' + (block.conditionBlock ? ' has-block' : '');
+    slot.dataset.slotFor = block.id;
+
+    if (block.conditionBlock){
+      slot.appendChild(renderConditionBlockEl(block.conditionBlock, (newCond) => {
+        block.conditionBlock = newCond;
+        renderWorkspace();
+      }));
+    } else {
+      const placeholder = document.createElement('span');
+      placeholder.className = 'slot-placeholder';
+      placeholder.textContent = 'upuść blok warunku';
+      slot.appendChild(placeholder);
+    }
+
+    bindConditionSlotDropHandlers(slot, block);
+    return slot;
+  }
+
+  // Renders a single condition-block instance (or a combinator with its two nested slots).
+  // onReplace(newConditionInstance) lets a nested slot swap its own contents (used when dropping
+  // a new condition onto an existing one, or onto an empty AND/OR side).
+  function renderConditionBlockEl(cond, onReplace){
+    const def = CONDITION_TYPES[cond.type];
+    if (!def) return document.createElement('span');
+
+    const wrap = document.createElement('span');
+    wrap.className = 'condition-block' + (def.isCombinator ? ' combo' : '');
+    wrap.draggable = true;
+    wrap.dataset.condId = cond.id;
+
+    if (def.isCombinator){
+      const leftSlot = document.createElement('span');
+      leftSlot.className = 'condition-slot' + (cond.left ? ' has-block' : '');
+      if (cond.left){
+        leftSlot.appendChild(renderConditionBlockEl(cond.left, (newCond) => { cond.left = newCond; renderWorkspace(); }));
+      } else {
+        const ph = document.createElement('span');
+        ph.className = 'slot-placeholder';
+        ph.textContent = '(puste)';
+        leftSlot.appendChild(ph);
+      }
+      bindConditionSlotDropHandlersGeneric(leftSlot, (newCond) => { cond.left = newCond; renderWorkspace(); });
+      wrap.appendChild(leftSlot);
+
+      const label = document.createElement('span');
+      label.textContent = def.type === 'or_combo' || cond.type === 'or_combo' ? 'LUB' : 'ORAZ';
+      wrap.appendChild(label);
+
+      const rightSlot = document.createElement('span');
+      rightSlot.className = 'condition-slot' + (cond.right ? ' has-block' : '');
+      if (cond.right){
+        rightSlot.appendChild(renderConditionBlockEl(cond.right, (newCond) => { cond.right = newCond; renderWorkspace(); }));
+      } else {
+        const ph = document.createElement('span');
+        ph.className = 'slot-placeholder';
+        ph.textContent = '(puste)';
+        rightSlot.appendChild(ph);
+      }
+      bindConditionSlotDropHandlersGeneric(rightSlot, (newCond) => { cond.right = newCond; renderWorkspace(); });
+      wrap.appendChild(rightSlot);
+    } else {
+      const parts = def.label.split(/(\{\w+\})/g);
+      parts.forEach(part => {
+        const m = part.match(/^\{(\w+)\}$/);
+        if (m){
+          const paramName = m[1];
+          const spec = (def.params || {})[paramName];
+          if (!spec) return;
+          const input = document.createElement('input');
+          input.type = 'text';
+          input.value = cond.params[paramName] || '';
+          input.size = Math.max(3, Math.min(20, (cond.params[paramName] || '').length || 5));
+          input.addEventListener('input', () => { cond.params[paramName] = input.value; renderCodeAndLint(); });
+          input.addEventListener('mousedown', (e) => e.stopPropagation());
+          input.addEventListener('click', (e) => e.stopPropagation());
+          wrap.appendChild(input);
+        } else if (part){
+          const span = document.createElement('span');
+          span.textContent = part;
+          wrap.appendChild(span);
+        }
+      });
+    }
+
+    const delBtn = document.createElement('button');
+    delBtn.className = 'cond-del';
+    delBtn.textContent = '×';
+    delBtn.title = 'Usuń ten warunek';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      onReplace(null);
+    });
+    wrap.appendChild(delBtn);
+
+    wrap.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      currentConditionDrag = { condInstance: cond, sourceRemover: () => onReplace(null) };
+      e.dataTransfer.effectAllowed = 'move';
+      wrap.classList.add('dragging');
+    });
+    wrap.addEventListener('dragend', (e) => {
+      e.stopPropagation();
+      wrap.classList.remove('dragging');
+      currentConditionDrag = null;
+    });
+
+    return wrap;
+  }
+
+  function appendDeleteButton(row, block){
+    const delBtn = document.createElement('button');
+    delBtn.className = 'block-btn del';
+    delBtn.textContent = '×';
+    delBtn.title = 'Usuń blok';
+    delBtn.addEventListener('click', (e) => {
+      e.stopPropagation();
+      removeBlockById(block.id);
+      renderWorkspace();
+    });
+    row.appendChild(delBtn);
+  }
+
+  // Renders the call_function block's row: a dropdown listing every function_def currently in
+  // the workspace (plus a manual-entry option for functions defined elsewhere, e.g. in another
+  // file), and one text input per parameter of the selected function — kept in sync so picking a
+  // different function immediately shows the right number of argument fields instead of a single
+  // generic "args" text blob the person would have to format correctly by hand.
+  function renderCallFunctionRow(block, row){
+    const label1 = document.createElement('span');
+    label1.className = 'block-label';
+    label1.textContent = 'wywołaj funkcję';
+    row.appendChild(label1);
+
+    const knownFunctions = findAllFunctionDefs(state.root);
+    const select = document.createElement('select');
+    const manualOption = document.createElement('option');
+    manualOption.value = '__manual__';
+    manualOption.textContent = '(wpisz nazwę ręcznie — funkcja spoza tego workspace)';
+    select.appendChild(manualOption);
+    knownFunctions.forEach(fn => {
+      const opt = document.createElement('option');
+      opt.value = fn.name;
+      opt.textContent = `${fn.name}(${fn.paramNames.join(', ')})`;
+      select.appendChild(opt);
+    });
+    const currentIsKnown = knownFunctions.some(fn => fn.name === block.params.functionName);
+    select.value = currentIsKnown ? block.params.functionName : '__manual__';
+
+    const manualNameInput = document.createElement('input');
+    manualNameInput.type = 'text';
+    manualNameInput.placeholder = 'nazwaFunkcji';
+    manualNameInput.value = currentIsKnown ? '' : (block.params.functionName || '');
+    manualNameInput.style.display = currentIsKnown ? 'none' : 'inline-block';
+    manualNameInput.size = 14;
+
+    const argsContainer = document.createElement('span');
+    argsContainer.style.display = 'inline-flex';
+    argsContainer.style.gap = '4px';
+    argsContainer.style.flexWrap = 'wrap';
+
+    function currentArgValues(){
+      // Splits the stored comma-joined args string back into individual values, so switching
+      // functions or re-rendering doesn't lose values the person already typed for matching slots.
+      return (block.params.args || '').split(',').map(s => s.trim());
+    }
+
+    function renderArgFields(paramNames){
+      argsContainer.innerHTML = '';
+      const existingValues = currentArgValues();
+      const newValues = paramNames.map((name, i) => existingValues[i] || '');
+      paramNames.forEach((paramName, i) => {
+        const argInput = document.createElement('input');
+        argInput.type = 'text';
+        argInput.placeholder = paramName;
+        argInput.value = newValues[i];
+        argInput.size = Math.max(4, Math.min(16, paramName.length + 2));
+        argInput.addEventListener('input', () => {
+          newValues[i] = argInput.value;
+          block.params.args = newValues.join(', ');
+          renderCodeAndLint();
+        });
+        argInput.addEventListener('mousedown', (e) => e.stopPropagation());
+        argInput.addEventListener('click', (e) => e.stopPropagation());
+        argsContainer.appendChild(argInput);
+      });
+      block.params.args = newValues.join(', ');
+    }
+
+    // Initial render: use the selected function's known parameter names, or fall back to
+    // whatever was already stored (e.g. after a JSON import) if the function isn't found.
+    const initialFn = knownFunctions.find(fn => fn.name === select.value);
+    if (initialFn){
+      renderArgFields(initialFn.paramNames);
+    } else if (block.params.args){
+      // Unknown function but has stored args — show them as plain positional fields with
+      // generic placeholders so nothing is lost, just without named hints.
+      const existing = currentArgValues();
+      renderArgFields(existing.map((_, i) => `arg${i+1}`));
+    }
+
+    select.addEventListener('change', () => {
+      block.params.functionName = select.value === '__manual__' ? manualNameInput.value : select.value;
+      manualNameInput.style.display = select.value === '__manual__' ? 'inline-block' : 'none';
+      const fn = knownFunctions.find(f => f.name === select.value);
+      if (fn){
+        block.params.args = ''; // fresh slate when switching to a different known function
+        renderArgFields(fn.paramNames);
+      }
+      renderCodeAndLint();
+    });
+    select.addEventListener('mousedown', (e) => e.stopPropagation());
+    select.addEventListener('click', (e) => e.stopPropagation());
+
+    manualNameInput.addEventListener('input', () => {
+      block.params.functionName = manualNameInput.value;
+      renderCodeAndLint();
+    });
+    manualNameInput.addEventListener('mousedown', (e) => e.stopPropagation());
+    manualNameInput.addEventListener('click', (e) => e.stopPropagation());
+
+    row.appendChild(select);
+    row.appendChild(manualNameInput);
+    const openParen = document.createElement('span');
+    openParen.className = 'block-label';
+    openParen.textContent = '(';
+    row.appendChild(openParen);
+    row.appendChild(argsContainer);
+    const closeParen = document.createElement('span');
+    closeParen.className = 'block-label';
+    closeParen.textContent = ')';
+    row.appendChild(closeParen);
+  }
+
+  function renderBlockEl(block){
+    const def = BLOCK_TYPES[block.type];
+    if (!def) return document.createElement('div'); // unknown type, shouldn't happen
+
+    const wrap = document.createElement('div');
+    wrap.className = 'block';
+    wrap.dataset.cat = def.cat;
+    wrap.dataset.blockId = block.id;
+
+    const row = document.createElement('div');
+    row.className = 'block-row';
+    row.draggable = true;
+
+    if (def.dynamicParams){
+      renderCallFunctionRow(block, row);
+      appendDeleteButton(row, block);
+      wrap.appendChild(row);
+      bindBlockDragHandlers(wrap, row, block);
+      return wrap;
+    }
+
+    // Build the row content by splitting the label template around {param} placeholders,
+    // inserting real input elements for each param in place. Blocks with hasConditionSlot get a
+    // special drop-zone slot for the "condition" param instead of a plain text input, so a
+    // condition puzzle-piece block can be dropped in (Scratch-style) as an alternative to typing.
+    const parts = def.label.split(/(\{\w+\})/g);
+    parts.forEach(part => {
+      const m = part.match(/^\{(\w+)\}$/);
+      if (m){
+        const paramName = m[1];
+        const spec = (def.params || {})[paramName];
+        if (!spec) return;
+
+        if (def.hasConditionSlot && paramName === 'condition'){
+          row.appendChild(renderConditionSlot(block));
+          return;
+        }
+
+        let input;
+        if (spec.type === 'select'){
+          input = document.createElement('select');
+          spec.options.forEach(opt => {
+            const o = document.createElement('option');
+            o.value = opt; o.textContent = opt;
+            if (block.params[paramName] === opt) o.selected = true;
+            input.appendChild(o);
+          });
+        } else {
+          input = document.createElement('input');
+          input.type = 'text';
+          input.value = block.params[paramName] || '';
+          input.size = Math.max(4, Math.min(28, (block.params[paramName] || '').length || 8));
+        }
+        input.addEventListener('input', () => {
+          block.params[paramName] = input.value;
+          renderCodeAndLint();
+        });
+        input.addEventListener('change', () => {
+          block.params[paramName] = input.value;
+          renderCodeAndLint();
+        });
+        input.addEventListener('mousedown', (e) => e.stopPropagation());
+        input.addEventListener('click', (e) => e.stopPropagation());
+        row.appendChild(input);
+      } else if (part){
+        const span = document.createElement('span');
+        span.className = 'block-label';
+        span.textContent = part;
+        row.appendChild(span);
+      }
+    });
+
+    appendDeleteButton(row, block);
+
+    wrap.appendChild(row);
+
+    if (def.container){
+      wrap.classList.toggle('target-selected', state.targetContainerId === block.id);
+      row.addEventListener('click', (e) => {
+        if (e.target.closest('input, select, button')) return; // don't hijack edits/deletes
+        selectTargetContainer(block.id);
+      });
+      const body = document.createElement('div');
+      body.className = 'block-body';
+      const childList = document.createElement('div');
+      childList.className = 'block-list';
+      body.appendChild(childList);
+      wrap.appendChild(body);
+      if (!block.children) block.children = [];
+      renderBlockList(block.children, childList);
+    }
+
+    bindBlockDragHandlers(wrap, row, block);
+    return wrap;
+  }
+
+  // ============================================================
+  // CODE GENERATION
+  // Recursively walks the block tree and emits Skript source text with tab
+  // indentation. Container blocks (command, on join, if, loop, etc.) end
+  // their own generated line with ":" and their children render one tab
+  // deeper. The special "codeIndentChildrenExtra" flag (used by "command")
+  // accounts for the fact that "command /x:" needs a "trigger:" sub-line
+  // before the actual body starts, adding one more indent level.
+  // ============================================================
+  // Converts a condition-block instance (possibly a nested AND/OR tree) into Skript expression
+  // text. Falls back to "true" for an entirely empty slot so generated code stays syntactically
+  // complete even mid-editing.
+  function generateConditionCode(cond){
+    if (!cond) return 'true';
+    const def = CONDITION_TYPES[cond.type];
+    if (!def) return 'true';
+    if (def.isCombinator){
+      const leftText = generateConditionCode(cond.left);
+      const rightText = generateConditionCode(cond.right);
+      const op = cond.type === 'or_combo' ? 'or' : 'and';
+      return `${leftText} ${op} ${rightText}`;
+    }
+    return def.code(cond.params || {});
+  }
+
+  function generateCodeForBlock(block, depth){
+    const def = BLOCK_TYPES[block.type];
+    if (!def) return '';
+    const indent = '\t'.repeat(depth);
+    // If this block has a condition slot and a condition-block was dropped into it, use its
+    // generated text in place of the free-text "condition" param for this render — the param
+    // itself is left untouched so switching back to manual text editing doesn't lose anything.
+    const effectiveParams = { ...(block.params || {}) };
+    if (def.hasConditionSlot && block.conditionBlock){
+      effectiveParams.condition = generateConditionCode(block.conditionBlock);
+    }
+    const ownLine = def.code(effectiveParams);
+    // For multi-line code() output (only "command" uses this, for its "trigger:" sub-line),
+    // the first line gets this block's own indent; every following line gets one extra tab,
+    // matching Skript's structure (command line, then an indented "trigger:" line).
+    const ownLines = ownLine.split('\n').map((line, i) => i === 0 ? indent + line : '\t'.repeat(depth + 1) + line);
+    let out = ownLines.join('\n');
+
+    if (def.container){
+      const childDepth = depth + 1 + (def.codeIndentChildrenExtra || 0);
+      const childLines = (block.children || [])
+        .map(child => generateCodeForBlock(child, childDepth))
+        .filter(Boolean);
+      if (childLines.length){
+        out += '\n' + childLines.join('\n');
+      }
+    }
+    return out;
+  }
+
+  function generateFullCode(){
+    const topLevelLines = state.root.map(block => generateCodeForBlock(block, 0)).filter(Boolean);
+    return topLevelLines.join('\n\n');
+  }
+
+  // ============================================================
+  // .sk IMPORT PARSER
+  // Best-effort: normalizes indentation first (mixed tabs/spaces, or
+  // spaces-only indentation, are both common when code is copy-pasted from
+  // different sources), then recursively groups lines by indent depth and
+  // matches each line's text against a list of known patterns (roughly the
+  // inverse of each block type's code() function). Anything that doesn't
+  // match becomes a "raw_code" block — never dropped, always kept — so a
+  // partially-recognized import is still useful and nothing is lost.
+  // ============================================================
+
+  // Returns { text, depth } for each non-blank, non-pure-comment-only-of-nothing line, with
+  // depth normalized to "number of indent levels" regardless of whether the source used tabs,
+  // spaces, or a mix — this is the "automatic fix" for inconsistent indentation.
+  function normalizeIndentedLines(rawText){
+    const rawLines = rawText.replace(/\r\n/g, '\n').split('\n');
+    const entries = [];
+    rawLines.forEach(line => {
+      if (line.trim() === '') return; // skip blank lines entirely
+      const leadingMatch = line.match(/^[ \t]*/)[0];
+      // Count indentation width in "tab-equivalent units": a literal tab counts as 1 unit,
+      // and every run of spaces gets divided by 4 (a common space-indent width) and rounded —
+      // this normalizes spaces-only, tabs-only, and mixed indentation to the same depth scale.
+      let units = 0;
+      let spaceRun = 0;
+      for (const ch of leadingMatch){
+        if (ch === '\t'){ units += 1 + Math.round(spaceRun / 4); spaceRun = 0; }
+        else { spaceRun++; }
+      }
+      units += Math.round(spaceRun / 4);
+      entries.push({ text: line.trim(), rawDepth: units });
+    });
+    if (entries.length === 0) return entries;
+
+    // Re-scale raw depth units to clean sequential levels (0,1,2,...) — if the source jumped
+    // straight from 0 to 3 tabs for its first nested line, that becomes depth 1, not 3, so the
+    // generated tree (and the code re-generated from it) always has consistent single-level steps.
+    const sortedUnique = [...new Set(entries.map(e => e.rawDepth))].sort((a,b) => a-b);
+    const depthMap = new Map(sortedUnique.map((u, i) => [u, i]));
+    // The above flat re-scaling would incorrectly flatten genuinely different nesting levels that
+    // happen to reuse indent widths inconsistently across the file; instead, walk the lines and
+    // track a stack of "known depths seen so far on the path", which correctly handles dedents.
+    const result = [];
+    const stack = []; // stack of rawDepth values currently "open"
+    entries.forEach(e => {
+      while (stack.length && e.rawDepth <= stack[stack.length-1] && e.rawDepth !== stack[stack.length-1]){
+        if (e.rawDepth < stack[stack.length-1]) stack.pop();
+        else break;
+      }
+      // if this exact rawDepth is already the top of the stack, we're a sibling at that level
+      if (stack.length && e.rawDepth === stack[stack.length-1]){
+        // sibling — depth stays the same as current stack length - 1
+      } else if (stack.length && e.rawDepth > stack[stack.length-1]){
+        stack.push(e.rawDepth); // new deeper level
+      } else if (stack.length === 0){
+        stack.push(e.rawDepth);
+      } else {
+        // dedented past everything we were tracking — reset stack to this depth as new base
+        stack.length = 0;
+        stack.push(e.rawDepth);
+      }
+      result.push({ text: e.text, depth: stack.length - 1 });
+    });
+    return result;
+  }
+
+  // Pattern table: each entry tries to match a line's text and, on success, returns
+  // { type, params }. Tried in order, first match wins — more specific patterns
+  // (e.g. "command /x:") must come before generic fallbacks.
+  const IMPORT_PATTERNS = [
+    { type: 'command', re: /^command \/(\S+):$/, build: m => ({ name: m[1] }) },
+    { type: '__skip__', re: /^trigger:$/, build: () => null }, // absorbed into command's own multi-line code, not a separate block
+    { type: 'on_join', re: /^on join:$/, build: () => ({}) },
+    { type: 'on_quit', re: /^on quit:$/, build: () => ({}) },
+    { type: 'on_death', re: /^on death:$/, build: () => ({}) },
+    { type: 'on_respawn', re: /^on respawn:$/, build: () => ({}) },
+    { type: 'on_inventory_click', re: /^on inventory click:$/, build: () => ({}) },
+    { type: 'on_inventory_open', re: /^on inventory open:$/, build: () => ({}) },
+    { type: 'on_inventory_drag', re: /^on inventory drag:$/, build: () => ({}) },
+    { type: 'on_click', re: /^on (right click|left click|click):$/, build: m => ({ clickType: m[1] }) },
+    { type: 'function_def', re: /^function ([^(]+)\(([^)]*)\):$/, build: m => ({ name: m[1], params: m[2] }) },
+    { type: 'every_x_ticks', re: /^every (.+):$/, build: m => ({ interval: m[1] }) },
+    { type: 'else_if_block', re: /^else if (.+):$/, build: m => ({ condition: m[1] }) },
+    { type: 'else_block', re: /^else:$/, build: () => ({}) },
+    { type: 'if_block', re: /^if (.+):$/, build: m => ({ condition: m[1] }) },
+    { type: 'while_block', re: /^while (.+):$/, build: m => ({ condition: m[1] }) },
+    { type: 'loop_block', re: /^loop (.+):$/, build: m => ({ item: 'loop-value', list: m[1] }) },
+    { type: 'wait_block', re: /^wait (.+)$/, build: m => ({ duration: m[1] }) },
+    { type: 'stop_trigger', re: /^stop trigger$/, build: () => ({}) },
+    { type: 'exit_trigger', re: /^exit trigger$/, build: () => ({}) },
+    { type: 'cancel_event', re: /^cancel event$/, build: () => ({}) },
+    { type: 'return_block', re: /^return\s*(.*)$/, build: m => ({ value: m[1] || '' }) },
+    { type: 'set_slot', re: /^set slot (.+?) of player'?s current inventory to (.+?)(?: with lore (.+))?$/, build: m => ({ slot: m[1], item: m[2], lore: m[3] ? m[3].split(/\s+and\s+/).join('||') : '' }) },
+    { type: 'set_var', re: /^set (.+?) to (.+)$/, build: m => ({ var: m[1], value: m[2] }) },
+    { type: 'add_var', re: /^add (.+?) to (.+)$/, build: m => ({ value: m[1], var: m[2] }) },
+    { type: 'remove_var', re: /^remove (.+?) from (.+)$/, build: m => ({ value: m[1], var: m[2] }) },
+    { type: 'delete_var', re: /^delete (.+)$/, build: m => ({ var: m[1] }) },
+    { type: 'console_command', re: /^execute console command "(.+)"$/, build: m => ({ command: m[1].replace(/""/g,'"') }) },
+    { type: 'player_command', re: /^execute player command "(.+)"$/, build: m => ({ command: m[1].replace(/""/g,'"') }) },
+    { type: 'broadcast', re: /^broadcast (.+)$/, build: m => ({ message: m[1] }) },
+    { type: 'send_message', re: /^send (.+) to (.+)$/, build: m => ({ message: m[1], target: m[2] }) },
+    { type: 'teleport', re: /^teleport (.+?) to (.+)$/, build: m => ({ target: m[1], location: m[2] }) },
+    { type: 'give_item', re: /^give (.+?) of (.+?) to (.+)$/, build: m => ({ amount: m[1], item: m[2], target: m[3] }) },
+    { type: 'open_gui', re: /^open chest inventory with (.+?) rows named (.+?) to player$/, build: m => ({ rows: m[1], title: m[2] }) },
+    { type: 'close_inventory', re: /^close player'?s inventory$/, build: () => ({}) },
+    { type: 'heal_player', re: /^heal (.+)$/, build: m => ({ target: m[1] }) },
+    { type: 'kill_player', re: /^kill (.+)$/, build: m => ({ target: m[1] }) },
+    { type: 'draw_particle', re: /^draw (.+?) (.+?) particles at (.+)$/, build: m => ({ amount: m[1], particle: m[2], entity: m[3] }) },
+    { type: 'play_sound', re: /^play sound "(.+?)" with volume (.+?) to (.+)$/, build: m => ({ sound: m[1], volume: m[2], target: m[3] }) },
+    { type: 'apply_potion_effect', re: /^apply potion of (.+?) (.+?) to (.+?) for (.+)$/, build: m => ({ effect: m[1], amplifier: m[2], target: m[3], duration: m[4] }) },
+    { type: 'remove_potion_effect', re: /^remove (.+?) from (.+)$/, build: m => ({ effect: m[1], target: m[2] }) },
+    { type: 'send_title', re: /^send title (.+?) with subtitle (.+?) to (.+)$/, build: m => ({ title: m[1], subtitle: m[2], target: m[3] }) },
+    { type: 'send_actionbar', re: /^send (.+?) to (.+?) using action bar$/, build: m => ({ message: m[1], target: m[2] }) },
+    { type: 'feed_player', re: /^set (.+?)'?s food level to 20$/, build: m => ({ target: m[1] }) },
+    { type: 'set_weather', re: /^set weather in world "(.+?)" to (.+)$/, build: m => ({ world: m[1], weather: m[2] }) },
+    { type: 'set_time', re: /^set time in world "(.+?)" to (.+)$/, build: m => ({ world: m[1], time: m[2] }) },
+    { type: 'strike_lightning', re: /^strike lightning effect at (.+)$/, build: m => ({ location: m[1] }) },
+    { type: 'create_explosion', re: /^create explosion with force (.+?) at (.+)$/, build: m => ({ power: m[1], location: m[2] }) },
+    { type: 'set_scoreboard_line', re: /^set line (.+?) of (.+?)'?s sidebar to (.+)$/, build: m => ({ line: m[1], target: m[2], text: m[3] }) },
+    { type: 'call_function', re: /^(\w+)\((.*)\)$/, build: m => ({ functionName: m[1], args: m[2] }) },
+    { type: 'comment', re: /^#\s?(.*)$/, build: m => ({ text: m[1] }) },
+  ];
+
+  function matchLineToBlock(text){
+    for (const pattern of IMPORT_PATTERNS){
+      const m = text.match(pattern.re);
+      if (m){
+        if (pattern.type === '__skip__') return { skip: true };
+        return { type: pattern.type, params: pattern.build(m) };
+      }
+    }
+    return null; // no match — caller will wrap this as raw_code
+  }
+
+  // Builds the block tree from normalized {text, depth} entries. Uses a stack of "current
+  // container list" per depth level; a line deeper than the previous line becomes a child of
+  // the most recent block at the shallower depth (which must be a container-capable block —
+  // if it isn't, or if there's no container to attach to, this still degrades gracefully by
+  // attaching to the nearest available list rather than throwing away the line).
+  function parseSkriptCode(rawText){
+    const lines = normalizeIndentedLines(rawText);
+    const root = [];
+    // stack[i] = the children-array that lines at depth i should be appended to
+    const containerStack = [root];
+    let lastBlockAtDepth = {}; // depth -> the last block instance created at that depth (for special multi-line handling)
+    let skipNextTriggerAtDepth = null; // handles "command /x:\n\ttrigger:" — the trigger: line is absorbed
+
+    lines.forEach(({ text, depth }) => {
+      // Special case: a lone "trigger:" line immediately following a command at depth-1 is part
+      // of the command's own header, not a separate block — its children just attach one level
+      // deeper under the command, matching how commands are represented in this editor already.
+      if (skipNextTriggerAtDepth !== null && depth === skipNextTriggerAtDepth && text === 'trigger:'){
+        skipNextTriggerAtDepth = null;
+        return; // absorbed; the following deeper lines will attach under the command via containerStack
+      }
+      skipNextTriggerAtDepth = null;
+
+      while (containerStack.length > depth + 1) containerStack.pop();
+      const targetList = containerStack[Math.min(depth, containerStack.length - 1)];
+
+      const match = matchLineToBlock(text);
+      let blockInstance;
+      if (match && match.skip){
+        return;
+      } else if (match){
+        const def = BLOCK_TYPES[match.type];
+        const params = {};
+        Object.entries(def.params || {}).forEach(([key, spec]) => {
+          params[key] = (match.params && match.params[key] !== undefined) ? match.params[key] : (spec.default || '');
+        });
+        blockInstance = { id: nextId(), type: match.type, params, children: def.container ? [] : undefined };
+      } else {
+        // unrecognized line: preserved verbatim as a raw_code block so nothing is ever lost
+        blockInstance = { id: nextId(), type: 'raw_code', params: { code: text }, children: undefined };
+      }
+
+      targetList.push(blockInstance);
+
+      if (blockInstance.children){
+        containerStack.push(blockInstance.children);
+        if (match && match.type === 'command') skipNextTriggerAtDepth = depth + 1;
+      }
+    });
+
+    return root;
+  }
+
+  // ============================================================
+  // LINTER — automatic fixes and warnings
+  // Two kinds of checks:
+  // (1) Structural fixes applied automatically and silently to the block
+  //     tree itself (e.g. nothing needed here since the tree always
+  //     generates consistent tabs — the indentation problem this solves
+  //     for *imported* code is handled in the parser's own normalization).
+  // (2) Pattern-based warnings on the generated code text: known Skript
+  //     pitfalls seen in real projects (missing cancel event in inventory
+  //     click handlers, using the old/wrong event-slot syntax, etc). These
+  //     are surfaced to the user but not auto-corrected in-place, since
+  //     they require the user's judgement (e.g. do they *want* the click
+  //     cancelled?) — except where a safe, unambiguous rewrite is possible.
+  // ============================================================
+  function lintCode(code, blocks){
+    const findings = [];
+
+    // Check: on inventory click without any cancel event inside the same handler.
+    // Detected structurally (on the block tree) rather than by text search, since
+    // that's more reliable than regexing indentation.
+    function walk(list, ancestors){
+      list.forEach(block => {
+        if (block.type === 'on_inventory_click'){
+          const hasCancel = blockTreeContains(block.children, 'cancel_event');
+          if (!hasCancel){
+            findings.push({
+              level: 'warn',
+              message: 'Blok "on inventory click" nie zawiera "anuluj event" — bez tego gracze mogą wyciągać przedmioty z GUI do swojego ekwipunku.',
+            });
+          }
+        }
+        // A condition-block dropped directly into an if/while/else-if's slot, whose top level is
+        // an OR combinator, generates exactly the "if X or Y:" pattern confirmed to fail parsing
+        // on this Skript version — catch it here at the block-tree level, since it's produced by
+        // the visual condition builder now, not just by typed text.
+        const def = BLOCK_TYPES[block.type];
+        if (def && def.hasConditionSlot && block.conditionBlock && block.conditionBlock.type === 'or_combo'){
+          findings.push({
+            level: 'error',
+            message: `Blok "${labelPreview(def).split(' ')[0]}" ma bezpośrednio warunek "LUB" w swoim gnieździe — to generuje "if X or Y:", co nie parsuje się na Skript 2.14.2. Rozbij to na osobny blok "jeśli" i "w przeciwnym razie jeśli" zamiast łączenia przez LUB bezpośrednio pod jeśli/dopóki.`,
+          });
+        }
+        if (block.children) walk(block.children, ancestors.concat(block));
+      });
+    }
+    walk(state.root, []);
+
+    // Text-based checks on the generated code, for patterns that can come from raw/imported code
+    // that isn't represented as clean blocks (e.g. pasted-in legacy syntax).
+    if (/\bevent-slot is \d/.test(code) && !/index of event-slot/.test(code)){
+      findings.push({
+        level: 'warn',
+        message: '"slot of event-slot is X" jest starą/niepewną składnią w niektórych wersjach Skript — rozważ "set {_slot} to index of event-slot" i porównywanie {_slot}.',
+      });
+    }
+    if (/virtual chest inventory/.test(code)){
+      findings.push({
+        level: 'warn',
+        message: '"virtual chest inventory" bywa niepoprawne w niektórych środowiskach Skript — sprawdzony wariant to "chest inventory with X rows".',
+      });
+    }
+    if (/open chest inventory with (\d+) rows/.test(code)){
+      const match = code.match(/open chest inventory with (\d+) rows/);
+      const rows = parseInt(match[1], 10);
+      if (rows > 6){
+        findings.push({
+          level: 'error',
+          message: `GUI z ${rows} rzędami przekracza limit 6 rzędów dla chest inventory — sloty powyżej rzędu 6 się nie wyrenderują.`,
+        });
+      }
+    }
+    if (/\bstop function\b/.test(code)){
+      findings.push({
+        level: 'error',
+        message: '"stop function" nie istnieje jako efekt w Skript — użyj "exit trigger", żeby wcześniej zakończyć funkcję.',
+      });
+    }
+    // "if X or Y:" / "else if X or Y:" / "if X and Y:" on a single line is confirmed to fail to
+    // parse on Skript 2.14.2 — each alternative needs its own separate if/else if branch instead.
+    if (/^\s*(else if|if)\s+.+\s+(or|and)\s+.+:\s*$/m.test(code)){
+      findings.push({
+        level: 'error',
+        message: '"if X or Y:" / "if X and Y:" w jednej linii nie parsuje się na Skript 2.14.2 — rozbij na osobne bloki "jeśli"/"w przeciwnym razie jeśli" dla każdego warunku.',
+      });
+    }
+    // Function names may only contain letters, numbers, and underscores — spaces make every
+    // parameter fail with "Invalid function signature" regardless of the parameter's own type.
+    const funcNameMatches = [...code.matchAll(/function (\S[^(]*)\(/g)];
+    funcNameMatches.forEach(m => {
+      if (/\s/.test(m[1])){
+        findings.push({
+          level: 'error',
+          message: `Nazwa funkcji "${m[1]}" zawiera spację — Skript nie akceptuje spacji w nazwach funkcji, użyj camelCase albo podkreślników (np. "${m[1].replace(/\s+/g,'')}").`,
+        });
+      }
+    });
+    if (/\bdeath cause\b/.test(code) || /\bcause of death\b/.test(code)){
+      findings.push({
+        level: 'error',
+        message: '"death cause" / "cause of death" nie parsuje się w on death — poprawne wyrażenie to "damage cause".',
+      });
+    }
+    if (/\bmod\b/.test(code) && /\{.*\}/.test(code)){
+      findings.push({
+        level: 'warn',
+        message: '"mod" operator jest niewspierany w tym środowisku Skript — jeśli liczysz resztę z dzielenia, użyj własnej funkcji pomocniczej z floor division.',
+      });
+    }
+    if (/name of (event-inventory|player'?s current inventory) is "/.test(code)){
+      findings.push({
+        level: 'warn',
+        message: 'Dopasowanie GUI przez "name of ... is" bywa zawodne przy kolorowych tytułach (kody kolorów inaczej wracają przy odczycie) — sprawdzony wzorzec to "unformatted name of ... contains" z tytułem bez kodów koloru.',
+      });
+    }
+    if (/player head of \S/.test(code)){
+      findings.push({
+        level: 'error',
+        message: '"player head of X" nie jest poprawną składnią — użyj "X\'s skull" (np. "loop-player\'s skull" albo "({_target} parsed as offline player)\'s skull").',
+      });
+    }
+    if (/raw slot of event/.test(code)){
+      findings.push({
+        level: 'error',
+        message: '"raw slot of event" nie istnieje w tym środowisku Skript — użyj "index of event-slot".',
+      });
+    }
+    if (/on anvil inventory click/.test(code)){
+      findings.push({
+        level: 'error',
+        message: '"on anvil inventory click" nie istnieje jako osobny event bez dodatkowego addonu — użyj zwykłego "on inventory click:" z warunkiem sprawdzającym nazwę/typ GUI w środku.',
+      });
+    }
+    if (/virtual anvil inventory/.test(code)){
+      findings.push({
+        level: 'error',
+        message: '"virtual anvil inventory" nie jest wspierane przez bazowy Skript — wymaga dodatkowego addonu (np. SkBee) i nie powinno się zakładać jego obecności bez potwierdzenia.',
+      });
+    }
+    // Multi-word particle names (dragon_breath, end_rod, enchantment_table) fail to parse on this
+    // server's confirmed particle syntax — only single-word names work (flame, lava, cloud, etc).
+    const particleMatches = [...code.matchAll(/draw \d+ (\S+) particles at/g)];
+    particleMatches.forEach(m => {
+      if (m[1].includes('_')){
+        findings.push({
+          level: 'error',
+          message: `Nazwa cząsteczki "${m[1]}" zawiera podkreślnik — na tym serwerze działają tylko jednowyrazowe nazwy cząsteczek (np. flame, lava, cloud, bubble, soul, smoke, witch), wieloczłonowe jak "${m[1]}" nie parsują się.`,
+        });
+      }
+    });
+    // Multiple separate "on inventory click:" triggers for different GUIs is confirmed less
+    // reliable than merging them into one block with per-section "if name contains X" checks —
+    // cancel event can misfire across triggers when there's more than one handler.
+    const inventoryClickCount = (code.match(/^on inventory click:$/gm) || []).length;
+    if (inventoryClickCount > 1){
+      findings.push({
+        level: 'warn',
+        message: `Wykryto ${inventoryClickCount} osobnych bloków "on inventory click:" — połączenie wszystkich GUI w jeden blok z sekcjami "jeśli nazwa GUI zawiera X" jest bardziej niezawodne (cancel event bywa zawodny przy wielu osobnych handlerach).`,
+      });
+    }
+
+    return findings;
+  }
+
+  function blockTreeContains(list, typeKey){
+    if (!list) return false;
+    for (const block of list){
+      if (block.type === typeKey) return true;
+      if (block.children && blockTreeContains(block.children, typeKey)) return true;
+    }
+    return false;
+  }
+
+  function renderCodeAndLint(){
+    const code = generateFullCode();
+    document.getElementById('codeOutput').textContent = code || '# Przeciągnij bloki z lewej palety, żeby zacząć.';
+
+    const findings = lintCode(code, state.root);
+    const lintList = document.getElementById('lintList');
+    lintList.innerHTML = '';
+    if (!findings.length){
+      const div = document.createElement('div');
+      div.className = 'lint-empty';
+      div.textContent = 'Brak ostrzeżeń — kod wygląda poprawnie.';
+      lintList.appendChild(div);
+    } else {
+      findings.forEach(f => {
+        const div = document.createElement('div');
+        div.className = 'lint-item ' + f.level;
+        div.innerHTML = `<span class="lint-icon">${f.level === 'error' ? '⛔' : '⚠️'}</span><span>${f.message}</span>`;
+        lintList.appendChild(div);
+      });
+    }
+  }
+
+  // ============================================================
+  // DRAG & DROP
+  // Two sources of drag: palette blocks (create new instance on drop) and
+  // existing workspace blocks (move to new location). Both use the browser's
+  // native HTML5 drag events. A shared "currentDrag" object tracks what's
+  // being dragged so drop handlers know whether to create or move.
+  // ============================================================
+  let currentDrag = null; // { kind: 'new', blockType } | { kind: 'move', blockId }
+  let dropIndicatorList = null;
+  let dropIndicatorIndex = -1;
+
+  // Separate drag-tracking for condition puzzle-pieces, since they use a totally different
+  // drop target type (a single condition-slot span, not a block-list) and can come from either
+  // the condition palette (new instance) or another slot in the workspace (move).
+  let currentConditionDrag = null; // { condType } for new-from-palette, or { condInstance, sourceRemover } for moving an existing one
+
+
+  function bindPaletteDragHandlers(){
+    document.querySelectorAll('.palette-block').forEach(el => {
+      el.addEventListener('dragstart', (e) => {
+        currentDrag = { kind: 'new', blockType: el.dataset.blockType };
+        e.dataTransfer.effectAllowed = 'copy';
+        el.classList.add('dragging-source');
+      });
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging-source');
+        currentDrag = null;
+        clearDropIndicators();
+      });
+    });
+    document.querySelectorAll('.palette-cond-block').forEach(el => {
+      el.addEventListener('dragstart', (e) => {
+        currentConditionDrag = { condType: el.dataset.condType };
+        e.dataTransfer.effectAllowed = 'copy';
+        el.classList.add('dragging-source');
+      });
+      el.addEventListener('dragend', () => {
+        el.classList.remove('dragging-source');
+        currentConditionDrag = null;
+      });
+    });
+  }
+
+  // Drop handling for a block's own condition slot (block.conditionBlock). Accepts either a new
+  // condition from the palette or an existing one being moved from elsewhere in the workspace.
+  function bindConditionSlotDropHandlers(slotEl, block){
+    bindConditionSlotDropHandlersGeneric(slotEl, (newCond) => {
+      block.conditionBlock = newCond;
+      renderWorkspace();
+    });
+  }
+
+  // Generic version used both for a block's top-level condition slot and for each side of an
+  // AND/OR combinator — onSet(newConditionInstance) is called with the dropped condition (or
+  // null if the drop should clear the slot, though clearing normally happens via the × button).
+  function bindConditionSlotDropHandlersGeneric(slotEl, onSet){
+    slotEl.addEventListener('dragover', (e) => {
+      if (!currentConditionDrag) return;
+      e.preventDefault();
+      e.stopPropagation();
+      slotEl.classList.add('drop-hover');
+    });
+    slotEl.addEventListener('dragleave', (e) => {
+      slotEl.classList.remove('drop-hover');
+    });
+    slotEl.addEventListener('drop', (e) => {
+      if (!currentConditionDrag) return;
+      e.preventDefault();
+      e.stopPropagation();
+      slotEl.classList.remove('drop-hover');
+      if (currentConditionDrag.condType){
+        const newCond = createConditionInstance(currentConditionDrag.condType);
+        if (newCond) onSet(newCond);
+      } else if (currentConditionDrag.condInstance){
+        // moving an existing condition block: remove it from its old slot, place it here
+        currentConditionDrag.sourceRemover();
+        onSet(currentConditionDrag.condInstance);
+      }
+      currentConditionDrag = null;
+    });
+  }
+
+  function bindBlockDragHandlers(wrapEl, rowEl, block){
+    rowEl.addEventListener('dragstart', (e) => {
+      e.stopPropagation();
+      currentDrag = { kind: 'move', blockId: block.id };
+      e.dataTransfer.effectAllowed = 'move';
+      wrapEl.classList.add('dragging');
+    });
+    rowEl.addEventListener('dragend', (e) => {
+      e.stopPropagation();
+      wrapEl.classList.remove('dragging');
+      currentDrag = null;
+      clearDropIndicators();
+    });
+  }
+
+  // Binds dragover/drop on a block-list container (either the root list or a container block's
+  // child list). Shows a drop-line at the position the dragged block would land, based on cursor
+  // Y position relative to existing block midpoints.
+  function bindListDropHandlers(list, containerEl){
+    containerEl.addEventListener('dragover', (e) => {
+      if (!currentDrag) return;
+      e.preventDefault();
+      e.dataTransfer.dropEffect = currentDrag.kind === 'new' ? 'copy' : 'move';
+
+      const children = Array.from(containerEl.children).filter(c => c.classList.contains('block'));
+      let insertIndex = children.length;
+      for (let i = 0; i < children.length; i++){
+        const rect = children[i].getBoundingClientRect();
+        const midY = rect.top + rect.height / 2;
+        if (e.clientY < midY){ insertIndex = i; break; }
+      }
+      showDropIndicator(containerEl, insertIndex);
+      dropIndicatorList = list;
+      dropIndicatorIndex = insertIndex;
+    });
+
+    containerEl.addEventListener('dragleave', (e) => {
+      // only clear if actually leaving this container (not entering a child element within it)
+      if (!containerEl.contains(e.relatedTarget)) {
+        removeDropIndicatorFrom(containerEl);
+      }
+    });
+
+    containerEl.addEventListener('drop', (e) => {
+      if (!currentDrag) return;
+      e.preventDefault();
+      e.stopPropagation();
+      const insertIndex = dropIndicatorIndex >= 0 ? dropIndicatorIndex : list.length;
+
+      if (currentDrag.kind === 'new'){
+        const newBlock = createBlockInstance(currentDrag.blockType);
+        if (newBlock) list.splice(insertIndex, 0, newBlock);
+      } else if (currentDrag.kind === 'move'){
+        // prevent dropping a block into its own descendant (would create a cycle)
+        const moving = findBlockLocation(state.root, currentDrag.blockId);
+        if (moving && !isDescendantList(moving.block, list)){
+          const removed = removeBlockById(currentDrag.blockId);
+          if (removed){
+            // if we removed an item from earlier in the SAME list, the target index shifts left by one
+            let adjustedIndex = insertIndex;
+            if (moving.list === list && moving.index < insertIndex) adjustedIndex--;
+            list.splice(adjustedIndex, 0, removed);
+          }
+        }
+      }
+      currentDrag = null;
+      clearDropIndicators();
+      renderWorkspace();
+    });
+  }
+
+  // Prevents dropping a container block into a list that lives inside its own children
+  // (would otherwise let a block become its own ancestor, an impossible/broken tree).
+  function isDescendantList(block, list){
+    if (!block.children) return false;
+    if (block.children === list) return true;
+    return block.children.some(child => isDescendantList(child, list));
+  }
+
+  function showDropIndicator(containerEl, index){
+    removeAllDropIndicators();
+    const line = document.createElement('div');
+    line.className = 'drop-line show';
+    line.dataset.dropIndicator = 'true';
+    const children = Array.from(containerEl.children).filter(c => c.classList.contains('block'));
+    if (index >= children.length){
+      containerEl.appendChild(line);
+    } else {
+      containerEl.insertBefore(line, children[index]);
+    }
+  }
+  function removeDropIndicatorFrom(containerEl){
+    containerEl.querySelectorAll(':scope > [data-drop-indicator]').forEach(el => el.remove());
+  }
+  function removeAllDropIndicators(){
+    document.querySelectorAll('[data-drop-indicator]').forEach(el => el.remove());
+  }
+  function clearDropIndicators(){
+    removeAllDropIndicators();
+    dropIndicatorList = null;
+    dropIndicatorIndex = -1;
+  }
+
+  // Also allow dropping directly onto the workspace-wrap background (appends to root list)
+  document.getElementById('workspaceWrap').addEventListener('dragover', (e) => {
+    if (!currentDrag) return;
+    e.preventDefault();
+  });
+  document.getElementById('workspaceWrap').addEventListener('drop', (e) => {
+    if (!currentDrag) return;
+    if (e.target.closest('.block-list')) return; // handled by a more specific list already
+    e.preventDefault();
+    if (currentDrag.kind === 'new'){
+      const newBlock = createBlockInstance(currentDrag.blockType);
+      if (newBlock) state.root.push(newBlock);
+    }
+    currentDrag = null;
+    clearDropIndicators();
+    renderWorkspace();
+  });
+
+  // ============================================================
+  // EXPORT / IMPORT
+  // ============================================================
+  function downloadTextFile(filename, content, mimeType){
+    try {
+      const blob = new Blob([content], { type: mimeType });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = filename;
+      document.body.appendChild(link);
+      link.click();
+      document.body.removeChild(link);
+      URL.revokeObjectURL(url);
+    } catch(e){ /* fall through to the modal fallback shown unconditionally below */ }
+    // Some restricted app webviews silently fail Blob-based downloads with no reliable way to
+    // detect the failure from script — so always also offer the content in a copyable modal,
+    // guaranteeing the export is usable either way (via the real download, or via copy-paste).
+    showExportFallback(filename, content);
+  }
+
+  function showExportFallback(filename, content){
+    document.getElementById('exportFallbackTitle').textContent = `Plik: ${filename}`;
+    document.getElementById('exportFallbackTextarea').value = content;
+    document.getElementById('exportFallbackModal').classList.add('show');
+  }
+
+  function copyViaExecCommand(text){
+    return new Promise((resolve, reject) => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (ok) resolve(); else reject(new Error('execCommand copy returned false'));
+      } catch(err){
+        document.body.removeChild(textarea);
+        reject(err);
+      }
+    });
+  }
+
+  function copyTextToClipboard(text){
+    // navigator.clipboard requires a secure context and can still silently fail even when
+    // present (permission denied, restricted webview, etc.) — so rather than picking one method
+    // upfront and giving up if it fails, always try the modern API first, and no matter why it
+    // fails, fall back to the older execCommand method via a temporary textarea, which works in
+    // far more environments including file:// pages and restricted app webviews.
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text).catch(() => copyViaExecCommand(text));
+    }
+    return copyViaExecCommand(text);
+  }
+
+  document.getElementById('btnCopyCode').addEventListener('click', () => {
+    const code = generateFullCode();
+    const btn = document.getElementById('btnCopyCode');
+    copyTextToClipboard(code).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'Skopiowano!';
+      btn.classList.add('copied');
+      setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      alert('Nie udało się skopiować automatycznie. Zaznacz kod ręcznie w panelu po prawej i skopiuj go (przytrzymaj palec na tekście, żeby zaznaczyć).');
+    });
+  });
+
+  document.getElementById('btnDownloadSk').addEventListener('click', () => {
+    const code = generateFullCode();
+    downloadTextFile('skrypt.sk', code, 'text/plain');
+  });
+
+  document.getElementById('btnExportJson').addEventListener('click', () => {
+    const json = JSON.stringify({ version: 1, root: state.root }, null, 2);
+    downloadTextFile('skrypt-bloki.json', json, 'application/json');
+  });
+
+  // Custom confirm modal — replaces native confirm(), which some restricted app webviews
+  // silently block or auto-dismiss, making buttons that depend on it appear completely
+  // unresponsive (the click fires, confirm() never returns true, so nothing visibly happens).
+  function showConfirm(title, message, onConfirm){
+    document.getElementById('confirmModalTitle').textContent = title;
+    document.getElementById('confirmModalMessage').textContent = message;
+    const okBtn = document.getElementById('confirmModalOkBtn');
+    const modal = document.getElementById('confirmModal');
+    const newOkBtn = okBtn.cloneNode(true); // clear any previously-attached listener
+    okBtn.parentNode.replaceChild(newOkBtn, okBtn);
+    newOkBtn.addEventListener('click', () => {
+      modal.classList.remove('show');
+      onConfirm();
+    });
+    modal.classList.add('show');
+  }
+
+  function showImportModeChoice(onReplace, onAdd){
+    const modal = document.getElementById('importChoiceModal');
+    const replaceBtn = document.getElementById('importChoiceReplaceBtn');
+    const addBtn = document.getElementById('importChoiceAddBtn');
+    const newReplaceBtn = replaceBtn.cloneNode(true);
+    replaceBtn.parentNode.replaceChild(newReplaceBtn, replaceBtn);
+    const newAddBtn = addBtn.cloneNode(true);
+    addBtn.parentNode.replaceChild(newAddBtn, addBtn);
+    newReplaceBtn.addEventListener('click', () => { modal.classList.remove('show'); onReplace(); });
+    newAddBtn.addEventListener('click', () => { modal.classList.remove('show'); onAdd(); });
+    modal.classList.add('show');
+  }
+
+  document.getElementById('btnClear').addEventListener('click', () => {
+    if (state.root.length === 0) return;
+    showConfirm('Wyczyścić workspace?', 'Na pewno wyczyścić cały workspace? Tej operacji nie da się cofnąć.', () => {
+      state.root = [];
+      renderWorkspace();
+    });
+  });
+
+  // ---- Import JSON ----
+  document.getElementById('btnImportJson').addEventListener('click', () => {
+    document.getElementById('importJsonManualTextarea').value = '';
+    document.getElementById('importJsonManualModal').classList.add('show');
+  });
+  function importJsonText(jsonText){
+    try {
+      const data = JSON.parse(jsonText);
+      const importedRoot = Array.isArray(data) ? data : (data.root || []);
+      // Re-assign fresh ids to avoid collisions with any blocks already in the workspace,
+      // since the imported JSON's ids were generated in a separate session/counter.
+      function reassignConditionIds(cond){
+        if (!cond) return cond;
+        return {
+          ...cond,
+          id: nextId(),
+          left: cond.left ? reassignConditionIds(cond.left) : cond.left,
+          right: cond.right ? reassignConditionIds(cond.right) : cond.right,
+        };
+      }
+      function reassignIds(list){
+        return list.map(block => ({
+          ...block,
+          id: nextId(),
+          children: block.children ? reassignIds(block.children) : block.children,
+          conditionBlock: block.conditionBlock ? reassignConditionIds(block.conditionBlock) : block.conditionBlock,
+        }));
+      }
+      const freshRoot = reassignIds(importedRoot);
+      if (state.root.length === 0){
+        state.root = freshRoot;
+        renderWorkspace();
+      } else {
+        showImportModeChoice(() => {
+          state.root = freshRoot;
+          renderWorkspace();
+        }, () => {
+          state.root = state.root.concat(freshRoot);
+          renderWorkspace();
+        });
+      }
+    } catch(err){
+      alert('Nie udało się wczytać JSON — sprawdź czy to poprawny eksport z tego kreatora.\n\n' + err.message);
+    }
+  }
+
+  document.getElementById('fileImportJson').addEventListener('change', (e) => {
+    const file = e.target.files[0];
+    if (!file) return;
+    const reader = new FileReader();
+    reader.onload = () => {
+      importJsonText(reader.result);
+      document.getElementById('importJsonManualModal').classList.remove('show');
+    };
+    reader.readAsText(file);
+    e.target.value = ''; // allow re-importing the same filename later
+  });
+
+  document.getElementById('btnDoImportJsonManual').addEventListener('click', () => {
+    const text = document.getElementById('importJsonManualTextarea').value;
+    if (!text.trim()) return;
+    document.getElementById('importJsonManualModal').classList.remove('show');
+    importJsonText(text);
+  });
+
+  document.getElementById('exportFallbackCopyBtn').addEventListener('click', () => {
+    const text = document.getElementById('exportFallbackTextarea').value;
+    const btn = document.getElementById('exportFallbackCopyBtn');
+    copyTextToClipboard(text).then(() => {
+      const original = btn.textContent;
+      btn.textContent = 'Skopiowano!';
+      setTimeout(() => { btn.textContent = original; }, 1500);
+    }).catch(() => {
+      alert('Nie udało się skopiować automatycznie — zaznacz tekst w polu powyżej ręcznie i skopiuj.');
+    });
+  });
+
+  // ---- Template Library ----
+  function renderTemplatesList(){
+    const listEl = document.getElementById('templatesList');
+    listEl.innerHTML = '';
+    Object.entries(TEMPLATES).forEach(([key, tpl]) => {
+      const item = document.createElement('div');
+      item.className = 'template-item';
+      item.innerHTML = `
+        <div class="t-label">${tpl.label}</div>
+        <div class="t-desc">${tpl.desc}</div>
+        <button data-template-key="${key}">Wstaw do workspace</button>
+      `;
+      listEl.appendChild(item);
+    });
+    listEl.querySelectorAll('button[data-template-key]').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const tpl = TEMPLATES[btn.dataset.templateKey];
+        if (!tpl) return;
+        const newBlocks = tpl.build().filter(Boolean);
+        state.root = state.root.concat(newBlocks);
+        document.getElementById('templatesModal').classList.remove('show');
+        renderWorkspace();
+      });
+    });
+  }
+
+  document.getElementById('btnTemplates').addEventListener('click', () => {
+    renderTemplatesList();
+    document.getElementById('templatesModal').classList.add('show');
+  });
+
+  // ---- Import .sk (opens modal for paste, or reads file) ----
+  document.getElementById('btnImportSk').addEventListener('click', () => {
+    document.getElementById('importSkModal').classList.add('show');
+  });
+  document.querySelectorAll('[data-close-modal]').forEach(el => {
+    el.addEventListener('click', () => {
+      document.getElementById(el.dataset.closeModal).classList.remove('show');
+    });
+  });
+  // Safety net: clicking the dimmed background (outside the modal box itself) or pressing
+  // Escape always closes whatever modal is open, regardless of which specific close button
+  // exists inside it — this guarantees a modal can never trap the rest of the interface.
+  document.querySelectorAll('.modal-overlay').forEach(overlay => {
+    overlay.addEventListener('click', (e) => {
+      if (e.target === overlay) overlay.classList.remove('show');
+    });
+  });
+  document.addEventListener('keydown', (e) => {
+    if (e.key === 'Escape'){
+      document.querySelectorAll('.modal-overlay.show').forEach(overlay => overlay.classList.remove('show'));
+    }
+  });
+  document.getElementById('btnDoImportSk').addEventListener('click', () => {
+    const text = document.getElementById('importSkTextarea').value;
+    if (!text.trim()) return;
+    const parsedRoot = parseSkriptCode(text);
+    document.getElementById('importSkModal').classList.remove('show');
+    document.getElementById('importSkTextarea').value = '';
+    if (state.root.length === 0){
+      state.root = parsedRoot;
+      renderWorkspace();
+    } else {
+      showImportModeChoice(() => {
+        state.root = parsedRoot;
+        renderWorkspace();
+      }, () => {
+        state.root = state.root.concat(parsedRoot);
+        renderWorkspace();
+      });
+    }
+  });
+
+  // ============================================================
+  // INIT
+  // ============================================================
+  document.getElementById('paletteSearch').addEventListener('input', (e) => {
+    renderPalette(e.target.value);
+  });
+
+  // Mobile tab switcher: only relevant below the 720px breakpoint, but harmless to bind always
+  document.getElementById('mobileTabs').addEventListener('click', (e) => {
+    const btn = e.target.closest('button[data-tab]');
+    if (!btn) return;
+    const tab = btn.dataset.tab;
+    document.querySelectorAll('#mobileTabs button').forEach(b => b.classList.toggle('active', b === btn));
+    const mainGrid = document.getElementById('mainGrid');
+    mainGrid.className = 'main tab-' + tab;
+  });
+
+  document.getElementById('resetTargetBtn').addEventListener('click', () => {
+    state.targetContainerId = null;
+    renderWorkspace();
+  });
+
+  // On coarse-pointer (touch) devices, jump to the Workspace tab right after tap-adding a block
+  // so the person immediately sees what they just added, since palette and workspace are on
+  // separate screens in the mobile tabbed layout.
+  const isCoarsePointer = window.matchMedia('(pointer: coarse)').matches;
+  function maybeSwitchToWorkspaceTab(){
+    if (!isCoarsePointer) return;
+    const workspaceTabBtn = document.querySelector('#mobileTabs button[data-tab="workspace"]');
+    if (workspaceTabBtn) workspaceTabBtn.click();
+  }
+
+  renderPalette('');
+  renderWorkspace();
+
+  // ---- Bridge import: another tool (e.g. Kreator GUI) can hand off generated Skript code via
+  // localStorage + a "?import=1" URL flag, so the person doesn't have to copy-paste manually.
+  (function checkBridgeImport(){
+    const params = new URLSearchParams(window.location.search);
+    if (params.get('import') !== '1') return;
+    let pending = null;
+    try { pending = localStorage.getItem('enchant-skript-bridge-import'); } catch(e){ /* ignore */ }
+    if (!pending) return;
+    try { localStorage.removeItem('enchant-skript-bridge-import'); } catch(e){ /* ignore */ }
+    const parsedRoot = parseSkriptCode(pending);
+    if (parsedRoot.length){
+      state.root = state.root.concat(parsedRoot);
+      renderWorkspace();
+    }
+    // Clean the URL so refreshing the page doesn't try to re-import (localStorage key is
+    // already cleared anyway, but this also avoids a confusing "?import=1" staying in the bar).
+    window.history.replaceState({}, '', window.location.pathname);
+  })();
+
+})();
+</script>
+</body>
+</html>

@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Kreator GUI — Enchant</title>
+<title>Baner Pożegnalny — Enchant</title>
 <style>
   :root {
     --bg-0: #0a0a0c;
@@ -23,7 +23,7 @@
 
   html, body {
     margin: 0;
-    height: 100%;
+    min-height: 100%;
     background: var(--bg-0);
     color: var(--text);
     font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Helvetica, Arial, sans-serif;
@@ -95,8 +95,7 @@
     .preview-stage { position: static; }
   }
 
-  /* --- GUI GRID PREVIEW (real canvas render) --- */
-  .gui-wrap {
+  .card-wrap {
     display: flex;
     justify-content: center;
     padding: 20px;
@@ -112,36 +111,15 @@
     border-radius: 10px;
   }
 
-  #guiCanvas {
+  #cardCanvas {
     image-rendering: pixelated;
     image-rendering: -moz-crisp-edges;
     image-rendering: crisp-edges;
-    cursor: pointer;
     max-width: 100%;
+    height: auto;
+    border-radius: 6px;
   }
 
-  .size-row {
-    display: flex;
-    gap: 8px;
-    margin-top: 14px;
-    justify-content: center;
-    flex-wrap: wrap;
-  }
-  .size-row button {
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: 7px;
-    color: var(--text-dim);
-    padding: 6px 11px;
-    font-size: 11px;
-    cursor: pointer;
-  }
-  .size-row button:hover { border-color: var(--accent); color: var(--accent); }
-  .size-row button.active { border-color: var(--accent); background: var(--bg-2); color: var(--accent); }
-
-  .dims { font-size: 11px; color: var(--text-dim); margin-top: 10px; text-align: center; }
-
-  /* --- FORM --- */
   .field { margin-bottom: 16px; }
   .field:last-child { margin-bottom: 0; }
   label.flabel {
@@ -152,7 +130,7 @@
     color: var(--text-dim);
     margin-bottom: 7px;
   }
-  input[type=text], input[type=number], select {
+  input[type=text], select {
     width: 100%;
     background: var(--bg-1);
     border: 1px solid var(--line);
@@ -162,67 +140,66 @@
     font-family: inherit;
     font-size: 14px;
   }
-  input[type=text]:focus, input[type=number]:focus { outline: none; border-color: var(--accent); }
+  input[type=text]:focus { outline: none; border-color: var(--accent); }
 
-  .lore-list { display: flex; flex-direction: column; gap: 8px; }
-  .lore-row {
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .row4 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+
+  .color-swatch-row {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .color-swatch-row input[type=color] {
+    width: 44px; height: 38px;
+    border: 1px solid var(--line);
+    border-radius: 8px;
+    background: none;
+    padding: 0;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .color-swatch-row input[type=text] { flex: 1; }
+
+  .preset-row {
+    display: flex;
+    gap: 6px;
+    margin-top: 8px;
+    flex-wrap: wrap;
+  }
+  .preset-row button {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 7px;
+    color: var(--text-dim);
+    padding: 6px 11px;
+    font-size: 11px;
+    cursor: pointer;
     display: flex;
     align-items: center;
     gap: 6px;
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 8px;
   }
-  .lore-row input[type=text] {
-    flex: 1;
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 13px;
-  }
-  .btn-mini {
-    background: none;
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    color: var(--text-dim);
-    width: 28px;
-    height: 32px;
-    cursor: pointer;
-    font-size: 13px;
+  .preset-row button:hover { border-color: var(--accent); color: var(--accent); }
+  .preset-row .swatch {
+    width: 10px; height: 10px;
+    border-radius: 50%;
+    border: 1px solid rgba(255,255,255,0.25);
     flex-shrink: 0;
   }
-  .btn-mini:hover { border-color: var(--accent); color: var(--accent); }
-  .btn-mini.rm:hover { border-color: #e5484d; color: #e5484d; }
-
-  .add-btn {
-    background: none;
-    border: 1px dashed var(--line-bright);
-    border-radius: 8px;
-    color: var(--text-dim);
-    padding: 9px;
-    font-size: 12px;
-    font-family: inherit;
-    cursor: pointer;
-    margin-top: 4px;
-    width: 100%;
-  }
-  .add-btn:hover { border-color: var(--accent); color: var(--accent); }
 
   .seg {
     display: flex;
     border: 1px solid var(--line);
     border-radius: 8px;
     overflow: hidden;
-    margin-bottom: 14px;
+    margin-bottom: 10px;
   }
   .seg button {
     flex: 1;
     background: var(--bg-1);
     border: none;
     color: var(--text-dim);
-    padding: 10px 4px;
+    padding: 9px 4px;
     font-family: inherit;
     font-size: 12px;
     font-weight: 600;
@@ -231,92 +208,6 @@
   }
   .seg button:last-child { border-right: none; }
   .seg button.active { background: var(--accent); color: #fff; }
-
-  .commands-group {
-    border: 1px solid var(--line);
-    border-radius: 10px;
-    padding: 12px;
-    background: var(--bg-1);
-    margin-top: 12px;
-  }
-  .commands-group .name {
-    font-size: 11px;
-    text-transform: uppercase;
-    letter-spacing: 0.06em;
-    color: var(--text);
-    font-weight: 600;
-    margin-bottom: 10px;
-    display: block;
-  }
-  .commands-list { display: flex; flex-direction: column; gap: 8px; margin-bottom: 8px; }
-  .command-row {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 10px;
-    margin-bottom: 8px;
-  }
-  .command-row-top {
-    display: flex;
-    align-items: center;
-    gap: 6px;
-    margin-bottom: 8px;
-  }
-  .command-row-top select {
-    flex: 1;
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 8px 10px;
-    font-size: 12.5px;
-    color: var(--text);
-    font-family: inherit;
-  }
-  .command-row-fields {
-    display: flex;
-    flex-direction: column;
-    gap: 6px;
-  }
-  .command-field .flabel-mini {
-    display: block;
-    font-size: 10px;
-    text-transform: uppercase;
-    letter-spacing: 0.05em;
-    color: var(--text-dim);
-    margin-bottom: 3px;
-  }
-  .command-field input[type=text] {
-    width: 100%;
-    background: var(--bg-1);
-    border: 1px solid var(--line);
-    border-radius: 6px;
-    padding: 7px 9px;
-    font-size: 12px;
-    font-family: 'Courier New', monospace;
-    color: var(--text);
-  }
-
-  .no-selection {
-    color: var(--text-dim);
-    font-size: 13px;
-    text-align: center;
-    padding: 30px 10px;
-  }
-
-  .output-code {
-    background: var(--bg-2);
-    border: 1px solid var(--line);
-    border-radius: 8px;
-    padding: 12px;
-    font-size: 12px;
-    white-space: pre-wrap;
-    word-break: break-word;
-    color: var(--text);
-    line-height: 1.6;
-    max-height: 320px;
-    overflow-y: auto;
-    font-family: 'Courier New', monospace;
-  }
 
   .export-btn {
     width: 100%;
@@ -332,11 +223,9 @@
     margin-top: 14px;
   }
   .export-btn:hover { background: var(--accent-dim); }
-  .export-btn.copied { background: var(--accent-dim); }
 
   .hint { font-size: 10.5px; color: var(--text-dim); line-height: 1.5; margin-top: 8px; }
-
-  datalist { }
+  .dims { font-size: 11px; color: var(--text-dim); margin-top: 10px; text-align: center; }
 </style>
 </head>
 <body>
@@ -345,8 +234,8 @@
   <header>
     <div class="tag"></div>
     <div>
-      <h1>Kreator GUI</h1>
-      <div class="sub">DeluxeMenus · siatka slotów · lore · komendy kliknięcia</div>
+      <h1>Baner Pożegnalny</h1>
+      <div class="sub">nick · twarz gracza · tekst pożegnania · eksport PNG</div>
     </div>
   </header>
 
@@ -356,33 +245,12 @@
     <div class="preview-stage">
       <div class="panel">
         <div class="panel-inner">
-          <p class="panel-title">Podgląd menu</p>
-
-          <div class="field">
-            <label class="flabel">Tytuł menu</label>
-            <input type="text" id="menuTitleInput" value="&8Menu Enchant" maxlength="64">
+          <p class="panel-title">Podgląd</p>
+          <div class="card-wrap">
+            <canvas id="cardCanvas"></canvas>
           </div>
-
-          <div class="gui-wrap">
-            <canvas id="guiCanvas"></canvas>
-          </div>
-
-          <div class="size-row" id="sizeRow"></div>
-          <div class="dims" id="slotCountLabel"></div>
-        </div>
-      </div>
-
-      <div class="panel" style="margin-top:16px;">
-        <div class="panel-inner">
-          <p class="panel-title">Format wyjściowy</p>
-          <div class="seg" id="outputFormatSeg">
-            <button data-val="deluxemenus" class="active">DeluxeMenus (YAML)</button>
-            <button data-val="skript">Skript</button>
-          </div>
-          <div class="output-code" id="outputCode"></div>
-          <button class="export-btn" id="copyBtn">Kopiuj</button>
-          <button class="export-btn" id="openInBlockBuilderBtn" style="display:none; margin-top:8px; background:var(--bg-1); border:1px solid var(--line); color:var(--text);">🧩 Otwórz w kreatorze bloków</button>
-          <div class="hint" id="outputHint"></div>
+          <div class="dims" id="dimsLabel"></div>
+          <button class="export-btn" id="downloadBtn">Pobierz PNG</button>
         </div>
       </div>
     </div>
@@ -392,20 +260,57 @@
 
       <div class="panel">
         <div class="panel-inner">
-          <p class="panel-title">Ustawienia menu</p>
+          <p class="panel-title">Dane gracza</p>
           <div class="field">
-            <label class="flabel">Komenda otwierająca (open_command)</label>
-            <input type="text" id="openCommandInput" value="menu" maxlength="32">
+            <label class="flabel">Nick (wyświetlany na banerze)</label>
+            <input type="text" id="nickInput" value="michxgaming" maxlength="24">
+          </div>
+          <div class="field">
+            <label class="flabel">Awatar</label>
+            <div class="seg" id="avatarModeSeg">
+              <button data-val="head" class="active">Minecraft (nick)</button>
+              <button data-val="discord">Discord (URL)</button>
+              <button data-val="block">Ikona bloku/itemu</button>
+            </div>
+            <div id="avatarHeadFields">
+              <input type="text" id="avatarNickInput" placeholder="Nick gracza w Minecraft (np. Notch)" value="michxgaming">
+              <div class="hint" id="avatarHeadStatus" style="margin-top:6px;">Pobiera prawdziwą twarz gracza na podstawie nicku Minecraft (Mojang/Ashcon). Jeśli się nie uda — np. brak internetu albo serwis padnie — baner automatycznie użyje ikony bloku zamiast.</div>
+            </div>
+            <div id="avatarDiscordFields" style="display:none;">
+              <input type="text" id="avatarDiscordInput" placeholder="URL avatara Discord (PPM na avatar → Kopiuj link obrazu)">
+              <div class="hint" id="avatarDiscordStatus" style="margin-top:6px;">Wklej bezpośredni link do avatara Discord. Jeśli obrazek się nie załaduje (zły URL albo Discord blokuje dostęp), baner automatycznie użyje ikony bloku zamiast.</div>
+            </div>
+            <div id="avatarBlockFields" style="display:none;">
+              <input type="text" id="headMaterialInput" list="headMaterialList" value="diamond_block">
+              <datalist id="headMaterialList"></datalist>
+              <div class="hint" style="margin-top:6px;">Wybierz dowolny blok/item jako symboliczną ikonkę (np. <code>diamond_block</code>, <code>netherite_ingot</code>, <code>emerald</code>).</div>
+            </div>
+          </div>
+          <div class="field">
+            <label class="flabel">Tekst pożegnania</label>
+            <input type="text" id="welcomeTextInput" value="Do zobaczenia!" maxlength="48">
           </div>
         </div>
       </div>
 
-      <div class="panel" style="margin-top:16px;" id="itemEditorPanel">
+      <div class="panel" style="margin-top:16px;">
         <div class="panel-inner">
-          <p class="panel-title">Edycja slotu <span id="editingSlotLabel" style="color:var(--text-dim);font-weight:normal;"></span></p>
-          <div id="itemEditorBody">
-            <div class="no-selection">Kliknij slot w podglądzie po lewej, żeby dodać lub edytować item.</div>
+          <p class="panel-title">Podtytuł</p>
+          <div class="field">
+            <label class="flabel">Druga linia (np. numer członka, IP serwera)</label>
+            <input type="text" id="subtitleInput" value="Dziękujemy za wspólną grę!" maxlength="60">
           </div>
+        </div>
+      </div>
+
+      <div class="panel" style="margin-top:16px;">
+        <div class="panel-inner">
+          <p class="panel-title">Kolor motywu banera</p>
+          <div class="color-swatch-row">
+            <input type="color" id="themeColorPicker" value="#8b8b96">
+            <input type="text" id="themeColorHex" value="#8b8b96" maxlength="7">
+          </div>
+          <div class="preset-row" id="colorPresetsGrid"></div>
         </div>
       </div>
 
@@ -422,163 +327,53 @@ window.MC_ASSETS = {
 </script>
 <script>
 (function(){
-  const MATERIALS = ['acacia_boat','acacia_button','acacia_chest_boat','acacia_door','acacia_fence_gate','acacia_hanging_sign','acacia_leaves','acacia_log','acacia_planks','acacia_pressure_plate','acacia_sapling','acacia_sign','acacia_slab','acacia_stairs','acacia_trapdoor','acacia_wall_hanging_sign','acacia_wall_sign','acacia_wood','activator_rail','allay_spawn_egg','allium','amethyst_block','amethyst_cluster','amethyst_shard','ancient_debris','andesite','andesite_slab','andesite_stairs','angler_pottery_sherd','anvil','apple','archer_pottery_sherd','armadillo_scute','armadillo_spawn_egg','armor_stand','arms_up_pottery_sherd','arrow','attached_melon_stem','attached_pumpkin_stem','axolotl_bucket','axolotl_spawn_egg','azalea','azalea_leaves','azure_bluet','baked_potato','bamboo','bamboo_block','bamboo_button','bamboo_chest_raft','bamboo_door','bamboo_fence_gate','bamboo_hanging_sign','bamboo_mosaic','bamboo_mosaic_slab','bamboo_mosaic_stairs','bamboo_planks','bamboo_pressure_plate','bamboo_raft','bamboo_sapling','bamboo_sign','bamboo_slab','bamboo_stairs','bamboo_trapdoor','bamboo_wall_hanging_sign','bamboo_wall_sign','barrel','barrier','basalt','bat_spawn_egg','beacon','bedrock','bee_nest','bee_spawn_egg','beef','beehive','beetroot','beetroot_seeds','beetroot_soup','beetroots','bell','big_dripleaf','big_dripleaf_stem','birch_boat','birch_button','birch_chest_boat','birch_door','birch_fence_gate','birch_hanging_sign','birch_leaves','birch_log','birch_planks','birch_pressure_plate','birch_sapling','birch_sign','birch_slab','birch_stairs','birch_trapdoor','birch_wall_hanging_sign','birch_wall_sign','birch_wood','black_banner','black_bed','black_bundle','black_bundle_open_back','black_bundle_open_front','black_candle','black_candle_cake','black_carpet','black_concrete','black_concrete_powder','black_dye','black_glazed_terracotta','black_harness','black_shulker_box','black_stained_glass','black_terracotta','black_wall_banner','black_wool','blackstone','blackstone_slab','blackstone_stairs','blade_pottery_sherd','blast_furnace','blaze_powder','blaze_rod','blaze_spawn_egg','blue_banner','blue_bed','blue_bundle','blue_bundle_open_back','blue_bundle_open_front','blue_candle','blue_candle_cake','blue_carpet','blue_concrete','blue_concrete_powder','blue_dye','blue_egg','blue_glazed_terracotta','blue_harness','blue_ice','blue_orchid','blue_shulker_box','blue_stained_glass','blue_terracotta','blue_wall_banner','blue_wool','bogged_spawn_egg','bolt_armor_trim_smithing_template','bone','bone_block','bone_meal','book','bookshelf','bordure_indented_banner_pattern','bow','bow_pulling_0','bow_pulling_1','bow_pulling_2','bowl','brain_coral','brain_coral_block','brain_coral_fan','brain_coral_wall_fan','bread','breeze_rod','breeze_spawn_egg','brewer_pottery_sherd','brewing_stand','brick','brick_slab','brick_stairs','bricks','brown_banner','brown_bed','brown_bundle','brown_bundle_open_back','brown_bundle_open_front','brown_candle','brown_candle_cake','brown_carpet','brown_concrete','brown_concrete_powder','brown_dye','brown_egg','brown_glazed_terracotta','brown_harness','brown_mushroom','brown_shulker_box','brown_stained_glass','brown_terracotta','brown_wall_banner','brown_wool','brush','bubble_column','bubble_coral','bubble_coral_block','bubble_coral_fan','bubble_coral_wall_fan','bucket','budding_amethyst','bundle','bundle_open_back','bundle_open_front','burn_pottery_sherd','bush','cactus','cactus_flower','cake','calcite','calibrated_sculk_sensor','camel_husk_spawn_egg','camel_spawn_egg','campfire','candle','candle_cake','carrot','carrot_on_a_stick','carrots','cartography_table','carved_pumpkin','cat_spawn_egg','cauldron','cave_spider_spawn_egg','cave_vines','cave_vines_plant','chain_command_block','chainmail_boots','chainmail_chestplate','chainmail_helmet','chainmail_leggings','charcoal','cherry_boat','cherry_button','cherry_chest_boat','cherry_door','cherry_fence_gate','cherry_hanging_sign','cherry_leaves','cherry_log','cherry_planks','cherry_pressure_plate','cherry_sapling','cherry_sign','cherry_slab','cherry_stairs','cherry_trapdoor','cherry_wall_hanging_sign','cherry_wall_sign','cherry_wood','chest','chest_minecart','chicken','chicken_spawn_egg','chipped_anvil','chiseled_copper','chiseled_deepslate','chiseled_nether_bricks','chiseled_polished_blackstone','chiseled_quartz_block','chiseled_red_sandstone','chiseled_resin_bricks','chiseled_sandstone','chiseled_stone_bricks','chiseled_tuff','chiseled_tuff_bricks','chorus_flower','chorus_fruit','clay','clay_ball','clock_00','clock_01','clock_02','clock_03','clock_04','clock_05','clock_06','clock_07','clock_08','clock_09','clock_10','clock_11','clock_12','clock_13','clock_14','clock_15','clock_16','clock_17','clock_18','clock_19','clock_20','clock_21','clock_22','clock_23','clock_24','clock_25','clock_26','clock_27','clock_28','clock_29','clock_30','clock_31','clock_32','clock_33','clock_34','clock_35','clock_36','clock_37','clock_38','clock_39','clock_40','clock_41','clock_42','clock_43','clock_44','clock_45','clock_46','clock_47','clock_48','clock_49','clock_50','clock_51','clock_52','clock_53','clock_54','clock_55','clock_56','clock_57','clock_58','clock_59','clock_60','clock_61','clock_62','clock_63','closed_eyeblossom','coal','coal_block','coal_ore','coarse_dirt','coast_armor_trim_smithing_template','cobbled_deepslate','cobbled_deepslate_slab','cobbled_deepslate_stairs','cobblestone','cobblestone_slab','cobblestone_stairs','cobweb','cocoa','cocoa_beans','cod','cod_bucket','cod_spawn_egg','command_block','command_block_minecart','comparator','compass_00','compass_01','compass_02','compass_03','compass_04','compass_05','compass_06','compass_07','compass_08','compass_09','compass_10','compass_11','compass_12','compass_13','compass_14','compass_15','compass_16','compass_17','compass_18','compass_19','compass_20','compass_21','compass_22','compass_23','compass_24','compass_25','compass_26','compass_27','compass_28','compass_29','compass_30','compass_31','conduit','cooked_beef','cooked_chicken','cooked_cod','cooked_mutton','cooked_porkchop','cooked_rabbit','cooked_salmon','cookie','copper_axe','copper_block','copper_boots','copper_bulb','copper_chain','copper_chest','copper_chestplate','copper_door','copper_golem_spawn_egg','copper_golem_statue','copper_grate','copper_helmet','copper_hoe','copper_horse_armor','copper_ingot','copper_lantern','copper_leggings','copper_nautilus_armor','copper_nugget','copper_ore','copper_pickaxe','copper_shovel','copper_spear','copper_spear_in_hand','copper_sword','copper_torch','copper_trapdoor','copper_wall_torch','cornflower','cow_spawn_egg','cracked_deepslate_bricks','cracked_deepslate_tiles','cracked_nether_bricks','cracked_polished_blackstone_bricks','cracked_stone_bricks','crafter','crafting_table','creaking_heart','creaking_spawn_egg','creeper_banner_pattern','creeper_head','creeper_spawn_egg','creeper_wall_head','crimson_button','crimson_door','crimson_fence_gate','crimson_fungus','crimson_hanging_sign','crimson_hyphae','crimson_nylium','crimson_planks','crimson_pressure_plate','crimson_roots','crimson_sign','crimson_slab','crimson_stairs','crimson_stem','crimson_trapdoor','crimson_wall_hanging_sign','crimson_wall_sign','crossbow_arrow','crossbow_firework','crossbow_pulling_0','crossbow_pulling_1','crossbow_pulling_2','crossbow_standby','crying_obsidian','cut_copper','cut_copper_slab','cut_copper_stairs','cut_red_sandstone','cut_red_sandstone_slab','cut_sandstone','cut_sandstone_slab','cyan_banner','cyan_bed','cyan_bundle','cyan_bundle_open_back','cyan_bundle_open_front','cyan_candle','cyan_candle_cake','cyan_carpet','cyan_concrete','cyan_concrete_powder','cyan_dye','cyan_glazed_terracotta','cyan_harness','cyan_shulker_box','cyan_stained_glass','cyan_terracotta','cyan_wall_banner','cyan_wool','damaged_anvil','dandelion','danger_pottery_sherd','dark_oak_boat','dark_oak_button','dark_oak_chest_boat','dark_oak_door','dark_oak_fence_gate','dark_oak_hanging_sign','dark_oak_leaves','dark_oak_log','dark_oak_planks','dark_oak_pressure_plate','dark_oak_sapling','dark_oak_sign','dark_oak_slab','dark_oak_stairs','dark_oak_trapdoor','dark_oak_wall_hanging_sign','dark_oak_wall_sign','dark_oak_wood','dark_prismarine','dark_prismarine_slab','dark_prismarine_stairs','daylight_detector','dead_brain_coral','dead_brain_coral_block','dead_brain_coral_fan','dead_brain_coral_wall_fan','dead_bubble_coral','dead_bubble_coral_block','dead_bubble_coral_fan','dead_bubble_coral_wall_fan','dead_bush','dead_fire_coral','dead_fire_coral_block','dead_fire_coral_fan','dead_fire_coral_wall_fan','dead_horn_coral','dead_horn_coral_block','dead_horn_coral_fan','dead_horn_coral_wall_fan','dead_tube_coral','dead_tube_coral_block','dead_tube_coral_fan','dead_tube_coral_wall_fan','decorated_pot','deepslate','deepslate_brick_slab','deepslate_brick_stairs','deepslate_bricks','deepslate_coal_ore','deepslate_copper_ore','deepslate_diamond_ore','deepslate_emerald_ore','deepslate_gold_ore','deepslate_iron_ore','deepslate_lapis_ore','deepslate_redstone_ore','deepslate_tile_slab','deepslate_tile_stairs','deepslate_tiles','detector_rail','diamond','diamond_axe','diamond_block','diamond_boots','diamond_chestplate','diamond_helmet','diamond_hoe','diamond_horse_armor','diamond_leggings','diamond_nautilus_armor','diamond_ore','diamond_pickaxe','diamond_shovel','diamond_spear','diamond_spear_in_hand','diamond_sword','diorite','diorite_slab','diorite_stairs','dirt','dirt_path','disc_fragment_5','dispenser','dolphin_spawn_egg','donkey_spawn_egg','dragon_breath','dragon_egg','dragon_head','dragon_wall_head','dried_ghast','dried_kelp','dried_kelp_block','dripstone_block','dropper','drowned_spawn_egg','dune_armor_trim_smithing_template','echo_shard','egg','elder_guardian_spawn_egg','elytra','elytra_broken','emerald','emerald_block','emerald_ore','enchanted_book','enchanting_table','end_crystal','end_gateway','end_portal','end_portal_frame','end_rod','end_stone','end_stone_brick_slab','end_stone_brick_stairs','end_stone_bricks','ender_chest','ender_dragon_spawn_egg','ender_eye','ender_pearl','enderman_spawn_egg','endermite_spawn_egg','evoker_spawn_egg','experience_bottle','explorer_pottery_sherd','exposed_chiseled_copper','exposed_copper','exposed_copper_bulb','exposed_copper_chain','exposed_copper_chest','exposed_copper_door','exposed_copper_golem_statue','exposed_copper_grate','exposed_copper_lantern','exposed_copper_trapdoor','exposed_cut_copper','exposed_cut_copper_slab','exposed_cut_copper_stairs','exposed_lightning_rod','eye_armor_trim_smithing_template','farmland','feather','fermented_spider_eye','fern','field_masoned_banner_pattern','filled_map','filled_map_markings','fire_charge','fire_coral','fire_coral_block','fire_coral_fan','fire_coral_wall_fan','firefly_bush','firework_rocket','firework_star','firework_star_overlay','fishing_rod','fishing_rod_cast','fletching_table','flint','flint_and_steel','flow_armor_trim_smithing_template','flow_banner_pattern','flow_pottery_sherd','flower_banner_pattern','flower_pot','flowering_azalea','flowering_azalea_leaves','fox_spawn_egg','friend_pottery_sherd','frog_spawn_egg','frogspawn','frosted_ice','furnace','furnace_minecart','ghast_spawn_egg','ghast_tear','gilded_blackstone','glass','glass_bottle','glistering_melon_slice','globe_banner_pattern','glow_berries','glow_ink_sac','glow_item_frame','glow_squid_spawn_egg','glowstone','glowstone_dust','goat_horn','goat_spawn_egg','gold_block','gold_ingot','gold_nugget','gold_ore','golden_apple','golden_axe','golden_boots','golden_carrot','golden_chestplate','golden_helmet','golden_hoe','golden_horse_armor','golden_leggings','golden_nautilus_armor','golden_pickaxe','golden_shovel','golden_spear','golden_spear_in_hand','golden_sword','granite','granite_slab','granite_stairs','grass_block','gravel','gray_banner','gray_bed','gray_bundle','gray_bundle_open_back','gray_bundle_open_front','gray_candle','gray_candle_cake','gray_carpet','gray_concrete','gray_concrete_powder','gray_dye','gray_glazed_terracotta','gray_harness','gray_shulker_box','gray_stained_glass','gray_terracotta','gray_wall_banner','gray_wool','green_banner','green_bed','green_bundle','green_bundle_open_back','green_bundle_open_front','green_candle','green_candle_cake','green_carpet','green_concrete','green_concrete_powder','green_dye','green_glazed_terracotta','green_harness','green_shulker_box','green_stained_glass','green_terracotta','green_wall_banner','green_wool','grindstone','guardian_spawn_egg','gunpowder','guster_banner_pattern','guster_pottery_sherd','hanging_roots','happy_ghast_spawn_egg','hay_block','heart_of_the_sea','heart_pottery_sherd','heartbreak_pottery_sherd','heavy_core','heavy_weighted_pressure_plate','hoglin_spawn_egg','honey_block','honey_bottle','honeycomb','honeycomb_block','hopper','hopper_minecart','horn_coral','horn_coral_block','horn_coral_fan','horn_coral_wall_fan','horse_spawn_egg','host_armor_trim_smithing_template','howl_pottery_sherd','husk_spawn_egg','ice','infested_chiseled_stone_bricks','infested_cobblestone','infested_cracked_stone_bricks','infested_deepslate','infested_mossy_stone_bricks','infested_stone','infested_stone_bricks','ink_sac','iron_axe','iron_block','iron_boots','iron_chain','iron_chestplate','iron_door','iron_golem_spawn_egg','iron_helmet','iron_hoe','iron_horse_armor','iron_ingot','iron_leggings','iron_nautilus_armor','iron_nugget','iron_ore','iron_pickaxe','iron_shovel','iron_spear','iron_spear_in_hand','iron_sword','iron_trapdoor','item_frame','jack_o_lantern','jigsaw','jukebox','jungle_boat','jungle_button','jungle_chest_boat','jungle_door','jungle_fence_gate','jungle_hanging_sign','jungle_leaves','jungle_log','jungle_planks','jungle_pressure_plate','jungle_sapling','jungle_sign','jungle_slab','jungle_stairs','jungle_trapdoor','jungle_wall_hanging_sign','jungle_wall_sign','jungle_wood','kelp','kelp_plant','knowledge_book','ladder','lantern','lapis_block','lapis_lazuli','lapis_ore','large_amethyst_bud','large_fern','lava','lava_bucket','lava_cauldron','lead','leaf_litter','leather','leather_boots','leather_boots_overlay','leather_chestplate','leather_chestplate_overlay','leather_helmet','leather_helmet_overlay','leather_horse_armor','leather_horse_armor_overlay','leather_leggings','leather_leggings_overlay','lectern','lever','light','light_00','light_01','light_02','light_03','light_04','light_05','light_06','light_07','light_08','light_09','light_10','light_11','light_12','light_13','light_14','light_15','light_blue_banner','light_blue_bed','light_blue_bundle','light_blue_bundle_open_back','light_blue_bundle_open_front','light_blue_candle','light_blue_candle_cake','light_blue_carpet','light_blue_concrete','light_blue_concrete_powder','light_blue_dye','light_blue_glazed_terracotta','light_blue_harness','light_blue_shulker_box','light_blue_stained_glass','light_blue_terracotta','light_blue_wall_banner','light_blue_wool','light_gray_banner','light_gray_bed','light_gray_bundle','light_gray_bundle_open_back','light_gray_bundle_open_front','light_gray_candle','light_gray_candle_cake','light_gray_carpet','light_gray_concrete','light_gray_concrete_powder','light_gray_dye','light_gray_glazed_terracotta','light_gray_harness','light_gray_shulker_box','light_gray_stained_glass','light_gray_terracotta','light_gray_wall_banner','light_gray_wool','light_weighted_pressure_plate','lightning_rod','lilac','lily_of_the_valley','lily_pad','lime_banner','lime_bed','lime_bundle','lime_bundle_open_back','lime_bundle_open_front','lime_candle','lime_candle_cake','lime_carpet','lime_concrete','lime_concrete_powder','lime_dye','lime_glazed_terracotta','lime_harness','lime_shulker_box','lime_stained_glass','lime_terracotta','lime_wall_banner','lime_wool','lingering_potion','llama_spawn_egg','lodestone','loom','mace','magenta_banner','magenta_bed','magenta_bundle','magenta_bundle_open_back','magenta_bundle_open_front','magenta_candle','magenta_candle_cake','magenta_carpet','magenta_concrete','magenta_concrete_powder','magenta_dye','magenta_glazed_terracotta','magenta_harness','magenta_shulker_box','magenta_stained_glass','magenta_terracotta','magenta_wall_banner','magenta_wool','magma_block','magma_cream','magma_cube_spawn_egg','mangrove_boat','mangrove_button','mangrove_chest_boat','mangrove_door','mangrove_fence_gate','mangrove_hanging_sign','mangrove_leaves','mangrove_log','mangrove_planks','mangrove_pressure_plate','mangrove_propagule','mangrove_roots','mangrove_sign','mangrove_slab','mangrove_stairs','mangrove_trapdoor','mangrove_wall_hanging_sign','mangrove_wall_sign','mangrove_wood','map','medium_amethyst_bud','melon','melon_seeds','melon_slice','melon_stem','milk_bucket','minecart','miner_pottery_sherd','mojang_banner_pattern','mooshroom_spawn_egg','moss_block','moss_carpet','mossy_cobblestone','mossy_cobblestone_slab','mossy_cobblestone_stairs','mossy_stone_brick_slab','mossy_stone_brick_stairs','mossy_stone_bricks','mourner_pottery_sherd','moving_piston','mud','mud_brick_slab','mud_brick_stairs','mud_bricks','muddy_mangrove_roots','mule_spawn_egg','mushroom_stew','music_disc_11','music_disc_13','music_disc_5','music_disc_blocks','music_disc_cat','music_disc_chirp','music_disc_creator','music_disc_creator_music_box','music_disc_far','music_disc_lava_chicken','music_disc_mall','music_disc_mellohi','music_disc_otherside','music_disc_pigstep','music_disc_precipice','music_disc_relic','music_disc_stal','music_disc_strad','music_disc_tears','music_disc_wait','music_disc_ward','mutton','mycelium','name_tag','nautilus_shell','nautilus_spawn_egg','nether_brick','nether_brick_slab','nether_brick_stairs','nether_bricks','nether_gold_ore','nether_portal','nether_quartz_ore','nether_sprouts','nether_star','nether_wart','nether_wart_block','netherite_axe','netherite_block','netherite_boots','netherite_chestplate','netherite_helmet','netherite_hoe','netherite_horse_armor','netherite_ingot','netherite_leggings','netherite_nautilus_armor','netherite_pickaxe','netherite_scrap','netherite_shovel','netherite_spear','netherite_spear_in_hand','netherite_sword','netherite_upgrade_smithing_template','netherrack','note_block','oak_boat','oak_button','oak_chest_boat','oak_door','oak_fence_gate','oak_hanging_sign','oak_leaves','oak_log','oak_planks','oak_pressure_plate','oak_sapling','oak_sign','oak_slab','oak_stairs','oak_trapdoor','oak_wall_hanging_sign','oak_wall_sign','oak_wood','observer','obsidian','ocelot_spawn_egg','ochre_froglight','ominous_bottle','ominous_trial_key','open_eyeblossom','orange_banner','orange_bed','orange_bundle','orange_bundle_open_back','orange_bundle_open_front','orange_candle','orange_candle_cake','orange_carpet','orange_concrete','orange_concrete_powder','orange_dye','orange_glazed_terracotta','orange_harness','orange_shulker_box','orange_stained_glass','orange_terracotta','orange_tulip','orange_wall_banner','orange_wool','oxeye_daisy','oxidized_chiseled_copper','oxidized_copper','oxidized_copper_bulb','oxidized_copper_chain','oxidized_copper_chest','oxidized_copper_door','oxidized_copper_golem_statue','oxidized_copper_grate','oxidized_copper_lantern','oxidized_copper_trapdoor','oxidized_cut_copper','oxidized_cut_copper_slab','oxidized_cut_copper_stairs','oxidized_lightning_rod','packed_ice','packed_mud','painting','pale_hanging_moss','pale_moss_block','pale_oak_boat','pale_oak_button','pale_oak_chest_boat','pale_oak_door','pale_oak_fence_gate','pale_oak_hanging_sign','pale_oak_leaves','pale_oak_log','pale_oak_planks','pale_oak_pressure_plate','pale_oak_sapling','pale_oak_sign','pale_oak_slab','pale_oak_stairs','pale_oak_trapdoor','pale_oak_wall_hanging_sign','pale_oak_wall_sign','pale_oak_wood','panda_spawn_egg','paper','parched_spawn_egg','parrot_spawn_egg','pearlescent_froglight','peony','petrified_oak_slab','phantom_membrane','phantom_spawn_egg','pig_spawn_egg','piglin_banner_pattern','piglin_brute_spawn_egg','piglin_head','piglin_spawn_egg','piglin_wall_head','pillager_spawn_egg','pink_banner','pink_bed','pink_bundle','pink_bundle_open_back','pink_bundle_open_front','pink_candle','pink_candle_cake','pink_carpet','pink_concrete','pink_concrete_powder','pink_dye','pink_glazed_terracotta','pink_harness','pink_petals','pink_shulker_box','pink_stained_glass','pink_terracotta','pink_tulip','pink_wall_banner','pink_wool','piston','piston_head','pitcher_crop','pitcher_plant','pitcher_pod','player_head','player_wall_head','plenty_pottery_sherd','podzol','pointed_dripstone','poisonous_potato','polar_bear_spawn_egg','polished_andesite','polished_andesite_slab','polished_andesite_stairs','polished_basalt','polished_blackstone','polished_blackstone_brick_slab','polished_blackstone_brick_stairs','polished_blackstone_bricks','polished_blackstone_button','polished_blackstone_pressure_plate','polished_blackstone_slab','polished_blackstone_stairs','polished_deepslate','polished_deepslate_slab','polished_deepslate_stairs','polished_diorite','polished_diorite_slab','polished_diorite_stairs','polished_granite','polished_granite_slab','polished_granite_stairs','polished_tuff','polished_tuff_slab','polished_tuff_stairs','popped_chorus_fruit','poppy','porkchop','potato','potatoes','potion','potion_overlay','potted_acacia_sapling','potted_allium','potted_azalea_bush','potted_azure_bluet','potted_bamboo','potted_birch_sapling','potted_blue_orchid','potted_brown_mushroom','potted_cactus','potted_cherry_sapling','potted_closed_eyeblossom','potted_cornflower','potted_crimson_fungus','potted_crimson_roots','potted_dandelion','potted_dark_oak_sapling','potted_dead_bush','potted_fern','potted_flowering_azalea_bush','potted_jungle_sapling','potted_lily_of_the_valley','potted_mangrove_propagule','potted_oak_sapling','potted_open_eyeblossom','potted_orange_tulip','potted_oxeye_daisy','potted_pale_oak_sapling','potted_pink_tulip','potted_poppy','potted_red_mushroom','potted_red_tulip','potted_spruce_sapling','potted_torchflower','potted_warped_fungus','potted_warped_roots','potted_white_tulip','potted_wither_rose','powder_snow','powder_snow_bucket','powder_snow_cauldron','powered_rail','prismarine','prismarine_brick_slab','prismarine_brick_stairs','prismarine_bricks','prismarine_crystals','prismarine_shard','prismarine_slab','prismarine_stairs','prize_pottery_sherd','pufferfish','pufferfish_bucket','pufferfish_spawn_egg','pumpkin','pumpkin_pie','pumpkin_seeds','pumpkin_stem','purple_banner','purple_bed','purple_bundle','purple_bundle_open_back','purple_bundle_open_front','purple_candle','purple_candle_cake','purple_carpet','purple_concrete','purple_concrete_powder','purple_dye','purple_glazed_terracotta','purple_harness','purple_shulker_box','purple_stained_glass','purple_terracotta','purple_wall_banner','purple_wool','purpur_block','purpur_pillar','purpur_slab','purpur_stairs','quartz','quartz_block','quartz_bricks','quartz_pillar','quartz_slab','quartz_stairs','rabbit','rabbit_foot','rabbit_hide','rabbit_spawn_egg','rabbit_stew','rail','raiser_armor_trim_smithing_template','ravager_spawn_egg','raw_copper','raw_copper_block','raw_gold','raw_gold_block','raw_iron','raw_iron_block','recovery_compass_00','recovery_compass_01','recovery_compass_02','recovery_compass_03','recovery_compass_04','recovery_compass_05','recovery_compass_06','recovery_compass_07','recovery_compass_08','recovery_compass_09','recovery_compass_10','recovery_compass_11','recovery_compass_12','recovery_compass_13','recovery_compass_14','recovery_compass_15','recovery_compass_16','recovery_compass_17','recovery_compass_18','recovery_compass_19','recovery_compass_20','recovery_compass_21','recovery_compass_22','recovery_compass_23','recovery_compass_24','recovery_compass_25','recovery_compass_26','recovery_compass_27','recovery_compass_28','recovery_compass_29','recovery_compass_30','recovery_compass_31','red_banner','red_bed','red_bundle','red_bundle_open_back','red_bundle_open_front','red_candle','red_candle_cake','red_carpet','red_concrete','red_concrete_powder','red_dye','red_glazed_terracotta','red_harness','red_mushroom','red_nether_brick_slab','red_nether_brick_stairs','red_nether_bricks','red_sand','red_sandstone','red_sandstone_slab','red_sandstone_stairs','red_shulker_box','red_stained_glass','red_terracotta','red_tulip','red_wall_banner','red_wool','redstone','redstone_block','redstone_lamp','redstone_ore','redstone_torch','redstone_wall_torch','reinforced_deepslate','repeater','repeating_command_block','resin_block','resin_brick','resin_brick_slab','resin_brick_stairs','resin_bricks','resin_clump','respawn_anchor','rib_armor_trim_smithing_template','rooted_dirt','rose_bush','rotten_flesh','saddle','salmon','salmon_bucket','salmon_spawn_egg','sand','sandstone','sandstone_slab','sandstone_stairs','scaffolding','scrape_pottery_sherd','sculk','sculk_catalyst','sculk_sensor','sculk_shrieker','sea_lantern','sea_pickle','seagrass','sentry_armor_trim_smithing_template','shaper_armor_trim_smithing_template','sheaf_pottery_sherd','shears','sheep_spawn_egg','shelter_pottery_sherd','short_dry_grass','short_grass','shroomlight','shulker_box','shulker_shell','shulker_spawn_egg','silence_armor_trim_smithing_template','silverfish_spawn_egg','skeleton_horse_spawn_egg','skeleton_skull','skeleton_spawn_egg','skeleton_wall_skull','skull_banner_pattern','skull_pottery_sherd','slime_ball','slime_block','slime_spawn_egg','small_amethyst_bud','small_dripleaf','smithing_table','smoker','smooth_basalt','smooth_quartz','smooth_quartz_slab','smooth_quartz_stairs','smooth_red_sandstone','smooth_red_sandstone_slab','smooth_red_sandstone_stairs','smooth_sandstone','smooth_sandstone_slab','smooth_sandstone_stairs','smooth_stone','smooth_stone_slab','sniffer_egg','sniffer_spawn_egg','snort_pottery_sherd','snout_armor_trim_smithing_template','snow','snow_block','snow_golem_spawn_egg','snowball','soul_campfire','soul_lantern','soul_sand','soul_soil','soul_torch','soul_wall_torch','spawner','spectral_arrow','spider_eye','spider_spawn_egg','spire_armor_trim_smithing_template','splash_potion','sponge','spore_blossom','spruce_boat','spruce_button','spruce_chest_boat','spruce_door','spruce_fence_gate','spruce_hanging_sign','spruce_leaves','spruce_log','spruce_planks','spruce_pressure_plate','spruce_sapling','spruce_sign','spruce_slab','spruce_stairs','spruce_trapdoor','spruce_wall_hanging_sign','spruce_wall_sign','spruce_wood','spyglass','spyglass_model','squid_spawn_egg','stick','sticky_piston','stone','stone_axe','stone_brick_slab','stone_brick_stairs','stone_bricks','stone_button','stone_hoe','stone_pickaxe','stone_pressure_plate','stone_shovel','stone_slab','stone_spear','stone_spear_in_hand','stone_stairs','stone_sword','stonecutter','stray_spawn_egg','strider_spawn_egg','string','stripped_acacia_log','stripped_acacia_wood','stripped_bamboo_block','stripped_birch_log','stripped_birch_wood','stripped_cherry_log','stripped_cherry_wood','stripped_crimson_hyphae','stripped_crimson_stem','stripped_dark_oak_log','stripped_dark_oak_wood','stripped_jungle_log','stripped_jungle_wood','stripped_mangrove_log','stripped_mangrove_wood','stripped_oak_log','stripped_oak_wood','stripped_pale_oak_log','stripped_pale_oak_wood','stripped_spruce_log','stripped_spruce_wood','stripped_warped_hyphae','stripped_warped_stem','structure_block','structure_void','sugar','sugar_cane','sunflower','suspicious_gravel','suspicious_sand','suspicious_stew','sweet_berries','sweet_berry_bush','tadpole_bucket','tadpole_spawn_egg','tall_dry_grass','tall_grass','tall_seagrass','target','terracotta','test_block','test_instance_block','tide_armor_trim_smithing_template','tinted_glass','tipped_arrow_base','tipped_arrow_head','tnt','tnt_minecart','torch','torchflower','torchflower_crop','torchflower_seeds','totem_of_undying','trader_llama_spawn_egg','trapped_chest','trial_key','trial_spawner','trident','tripwire','tripwire_hook','tropical_fish','tropical_fish_bucket','tropical_fish_spawn_egg','tube_coral','tube_coral_block','tube_coral_fan','tube_coral_wall_fan','tuff','tuff_brick_slab','tuff_brick_stairs','tuff_bricks','tuff_slab','tuff_stairs','turtle_egg','turtle_helmet','turtle_scute','turtle_spawn_egg','twisting_vines','twisting_vines_plant','vault','verdant_froglight','vex_armor_trim_smithing_template','vex_spawn_egg','villager_spawn_egg','vindicator_spawn_egg','wall_torch','wandering_trader_spawn_egg','ward_armor_trim_smithing_template','warden_spawn_egg','warped_button','warped_door','warped_fence_gate','warped_fungus','warped_fungus_on_a_stick','warped_hanging_sign','warped_hyphae','warped_nylium','warped_planks','warped_pressure_plate','warped_roots','warped_sign','warped_slab','warped_stairs','warped_stem','warped_trapdoor','warped_wall_hanging_sign','warped_wall_sign','warped_wart_block','water','water_bucket','water_cauldron','waxed_chiseled_copper','waxed_copper_block','waxed_copper_bulb','waxed_copper_chain','waxed_copper_chest','waxed_copper_door','waxed_copper_golem_statue','waxed_copper_grate','waxed_copper_lantern','waxed_copper_trapdoor','waxed_cut_copper','waxed_cut_copper_slab','waxed_cut_copper_stairs','waxed_exposed_chiseled_copper','waxed_exposed_copper','waxed_exposed_copper_bulb','waxed_exposed_copper_chain','waxed_exposed_copper_chest','waxed_exposed_copper_door','waxed_exposed_copper_golem_statue','waxed_exposed_copper_grate','waxed_exposed_copper_lantern','waxed_exposed_copper_trapdoor','waxed_exposed_cut_copper','waxed_exposed_cut_copper_slab','waxed_exposed_cut_copper_stairs','waxed_exposed_lightning_rod','waxed_lightning_rod','waxed_oxidized_chiseled_copper','waxed_oxidized_copper','waxed_oxidized_copper_bulb','waxed_oxidized_copper_chain','waxed_oxidized_copper_chest','waxed_oxidized_copper_door','waxed_oxidized_copper_golem_statue','waxed_oxidized_copper_grate','waxed_oxidized_copper_lantern','waxed_oxidized_copper_trapdoor','waxed_oxidized_cut_copper','waxed_oxidized_cut_copper_slab','waxed_oxidized_cut_copper_stairs','waxed_oxidized_lightning_rod','waxed_weathered_chiseled_copper','waxed_weathered_copper','waxed_weathered_copper_bulb','waxed_weathered_copper_chain','waxed_weathered_copper_chest','waxed_weathered_copper_door','waxed_weathered_copper_golem_statue','waxed_weathered_copper_grate','waxed_weathered_copper_lantern','waxed_weathered_copper_trapdoor','waxed_weathered_cut_copper','waxed_weathered_cut_copper_slab','waxed_weathered_cut_copper_stairs','waxed_weathered_lightning_rod','wayfinder_armor_trim_smithing_template','weathered_chiseled_copper','weathered_copper','weathered_copper_bulb','weathered_copper_chain','weathered_copper_chest','weathered_copper_door','weathered_copper_golem_statue','weathered_copper_grate','weathered_copper_lantern','weathered_copper_trapdoor','weathered_cut_copper','weathered_cut_copper_slab','weathered_cut_copper_stairs','weathered_lightning_rod','weeping_vines','weeping_vines_plant','wet_sponge','wheat','wheat_seeds','white_banner','white_bed','white_bundle','white_bundle_open_back','white_bundle_open_front','white_candle','white_candle_cake','white_carpet','white_concrete','white_concrete_powder','white_dye','white_glazed_terracotta','white_harness','white_shulker_box','white_stained_glass','white_terracotta','white_tulip','white_wall_banner','white_wool','wild_armor_trim_smithing_template','wildflowers','wind_charge','witch_spawn_egg','wither_rose','wither_skeleton_skull','wither_skeleton_spawn_egg','wither_skeleton_wall_skull','wither_spawn_egg','wolf_armor','wolf_armor_overlay','wolf_spawn_egg','wooden_axe','wooden_hoe','wooden_pickaxe','wooden_shovel','wooden_spear','wooden_spear_in_hand','wooden_sword','writable_book','written_book','yellow_banner','yellow_bed','yellow_bundle','yellow_bundle_open_back','yellow_bundle_open_front','yellow_candle','yellow_candle_cake','yellow_carpet','yellow_concrete','yellow_concrete_powder','yellow_dye','yellow_glazed_terracotta','yellow_harness','yellow_shulker_box','yellow_stained_glass','yellow_terracotta','yellow_wall_banner','yellow_wool','zoglin_spawn_egg','zombie_head','zombie_horse_spawn_egg','zombie_nautilus_spawn_egg','zombie_spawn_egg','zombie_villager_spawn_egg','zombie_wall_head','zombified_piglin_spawn_egg'];
-
   const state = {
-    size: 27, // 3 rows
-    menuTitle: '&8Menu Enchant',
-    openCommand: 'menu',
-    items: {}, // slot index (number) -> item object
-    selectedSlot: null,
-    outputFormat: 'deluxemenus',
+    nick: 'michxgaming',
+    avatarMode: 'head', // 'head' (Minecraft face via API), 'discord' (Discord avatar URL), or 'block' (atlas icon fallback)
+    avatarNick: 'michxgaming',
+    avatarDiscordUrl: '',
+    headMaterial: 'diamond_block',
+    welcomeText: 'Do zobaczenia!',
+    subtitle: 'Dziękujemy za wspólną grę!',
+    themeColor: '#8b8b96',
   };
 
-  // ============================================================
-  // ACTION_TYPES — registry of click-action kinds for GUI items. Each item's
-  // leftClickCommands/rightClickCommands is now an array of { type, ...fields }
-  // objects instead of raw prefixed strings, so the person picks a type from
-  // a dropdown and fills in only the fields that type needs, instead of
-  // having to remember/type prefixes like "[console]" or "[player]" by hand.
-  // Field specs mirror the pattern used in the Skript block builder.
-  // ============================================================
-  const ACTION_TYPES = {
-    close_menu: {
-      label: 'Zamknij menu',
-      fields: {},
-      toSkript: () => `close player's inventory`,
-      toYamlLine: () => `[close]`,
-    },
-    console_command: {
-      label: 'Komenda konsoli',
-      fields: { command: { label: 'Komenda (bez /)', default: 'give %player_name% diamond 1' } },
-      toSkript: (f) => `execute console command "${(f.command||'').replace(/"/g,'""')}"`,
-      toYamlLine: (f) => `[console] ${f.command||''}`,
-    },
-    player_command: {
-      label: 'Komenda gracza',
-      fields: { command: { label: 'Komenda (bez /)', default: 'spawn' } },
-      toSkript: (f) => `execute player command "${(f.command||'').replace(/"/g,'""')}"`,
-      toYamlLine: (f) => `[player] ${f.command||''}`,
-    },
-    send_message: {
-      label: 'Wyślij wiadomość',
-      fields: { message: { label: 'Treść wiadomości', default: '&aDziękujemy!' } },
-      toSkript: (f) => `send "${(f.message||'').replace(/"/g,'""')}" to player`,
-      toYamlLine: (f) => `[message] ${f.message||''}`,
-    },
-    teleport: {
-      label: 'Teleportuj gracza',
-      fields: { location: { label: 'Lokacja (np. spawn, warp nazwa)', default: 'spawn of world "world"' } },
-      toSkript: (f) => `teleport player to ${f.location||'spawn'}`,
-      toYamlLine: (f) => `[console] tp %player_name% ${f.location||'spawn'}`,
-    },
-    ban_player: {
-      label: 'Zbanuj gracza (LightBans)',
-      fields: {
-        target: { label: 'Gracz (np. %player_name% albo nick z argumentu)', default: '%player_name%' },
-        duration: { label: 'Czas (np. 7d, 0d = permanentny)', default: '0d' },
-        reason: { label: 'Powód', default: 'Naruszenie regulaminu' },
-      },
-      toSkript: (f) => `execute console command "ban ${f.target||'%player_name%'} ${f.duration||'0d'} ${f.reason||''}"`,
-      toYamlLine: (f) => `[console] ban ${f.target||'%player_name%'} ${f.duration||'0d'} ${f.reason||''}`,
-    },
-    grant_permission: {
-      label: 'Nadaj permisję/rangę (LuckPerms)',
-      fields: {
-        target: { label: 'Gracz', default: '%player_name%' },
-        perm: { label: 'Permisja lub grupa (np. group.vip)', default: 'group.vip' },
-      },
-      toSkript: (f) => `execute console command "lp user ${f.target||'%player_name%'} permission set ${f.perm||'perm.node'} true"`,
-      toYamlLine: (f) => `[console] lp user ${f.target||'%player_name%'} permission set ${f.perm||'perm.node'} true`,
-    },
-    give_currency: {
-      label: 'Daj walutę (Vault/EssentialsX)',
-      fields: {
-        target: { label: 'Gracz', default: '%player_name%' },
-        amount: { label: 'Ilość', default: '100' },
-      },
-      toSkript: (f) => `execute console command "eco give ${f.target||'%player_name%'} ${f.amount||'0'}"`,
-      toYamlLine: (f) => `[console] eco give ${f.target||'%player_name%'} ${f.amount||'0'}`,
-    },
-    give_key_case: {
-      label: 'Daj klucz/skrzynkę (GetCase)',
-      fields: {
-        target: { label: 'Gracz', default: '%player_name%' },
-        caseName: { label: 'Nazwa klucza/skrzynki', default: 'klucz_zwykly' },
-        amount: { label: 'Ilość', default: '1' },
-      },
-      toSkript: (f) => `execute console command "getcase give ${f.target||'%player_name%'} ${f.caseName||''} ${f.amount||'1'}"`,
-      toYamlLine: (f) => `[console] getcase give ${f.target||'%player_name%'} ${f.caseName||''} ${f.amount||'1'}`,
-    },
-    open_other_menu: {
-      label: 'Otwórz inne menu (komenda)',
-      fields: { command: { label: 'Komenda menu (bez /)', default: 'sklep' } },
-      toSkript: (f) => `execute player command "${(f.command||'').replace(/"/g,'""')}"`,
-      toYamlLine: (f) => `[player] ${f.command||''}`,
-    },
-    custom_raw: {
-      label: 'Inna komenda (własny tekst)',
-      fields: { raw: { label: 'Pełna linia (np. [console] twoja komenda)', default: '' } },
-      toSkript: (f) => skriptCommandLine(f.raw||''),
-      toYamlLine: (f) => f.raw||'',
-    },
+  // Cache of loaded <img> elements for real player heads, keyed by nick, so switching back and
+  // forth (or re-rendering for a color change) doesn't re-fetch the network every time.
+  const headImageCache = {};
+  let headFetchToken = 0; // guards against a slow, stale fetch overwriting a newer one
+
+  // Cache of loaded Discord avatar <img> elements, keyed by URL.
+  const discordImageCache = {};
+  let discordFetchToken = 0;
+
+  const COLOR_PRESETS = {
+    'Szary':         '#8b8b96',
+    'Czerwony':      '#e5484d',
+    'Fiolet':        '#a78bfa',
+    'Niebieski':     '#2f6bff',
+    'Złoty (GVip)':  '#f0b132',
+    'Cyan (SVip)':   '#3ac1f0',
+    'Zielony (Vip)': '#3ba55d',
+    'Biały':         '#e5e7eb',
   };
 
-  function newActionInstance(typeKey){
-    const def = ACTION_TYPES[typeKey];
-    if (!def) return null;
-    const fields = {};
-    Object.entries(def.fields).forEach(([key, spec]) => { fields[key] = spec.default || ''; });
-    return { type: typeKey, fields };
+  function hexToRgb(hex){
+    hex = hex.replace('#','');
+    return [parseInt(hex.slice(0,2),16), parseInt(hex.slice(2,4),16), parseInt(hex.slice(4,6),16)];
+  }
+  function rgbToHex(r,g,b){
+    return '#' + [r,g,b].map(v => Math.round(Math.max(0,Math.min(255,v))).toString(16).padStart(2,'0')).join('');
+  }
+  function mixHex(hexA, hexB, t){
+    const a = hexToRgb(hexA), b = hexToRgb(hexB);
+    return rgbToHex(a[0]+(b[0]-a[0])*t, a[1]+(b[1]-a[1])*t, a[2]+(b[2]-a[2])*t);
   }
 
-  function newItem(){
-    return {
-      material: 'STONE',
-      amount: 1,
-      displayName: '&fNowy przedmiot',
-      lore: ['&7Opis przedmiotu'],
-      leftClickCommands: [],
-      rightClickCommands: [],
-    };
-  }
-
-  // ---------- size presets ----------
-  const SIZE_PRESETS = [9, 18, 27, 36, 45, 54];
-
-  function renderSizeRow(){
-    const row = document.getElementById('sizeRow');
-    row.innerHTML = '';
-    SIZE_PRESETS.forEach(size => {
-      const btn = document.createElement('button');
-      btn.textContent = (size / 9) + ' rz.';
-      btn.className = size === state.size ? 'active' : '';
-      btn.addEventListener('click', () => {
-        if (size < state.size){
-          // remove items that would fall outside the new smaller size
-          Object.keys(state.items).forEach(slot => {
-            if (+slot >= size) delete state.items[slot];
-          });
-          if (state.selectedSlot != null && state.selectedSlot >= size) {
-            state.selectedSlot = null;
-          }
-        }
-        state.size = size;
-        renderSizeRow();
-        renderGrid();
-        renderItemEditor();
-        renderOutput();
-      });
-      row.appendChild(btn);
-    });
-  }
-
-  // ---------- real Minecraft item sprites (background is drawn, not textured) ----------
-  const SCALE = 2; // upscale factor for crisp pixel-art display
-  const SLOT = 18; // slot size in the fake grid
+  // ---------- atlas assets for the head sprite ----------
   const atlasImg = new Image();
-  let assetsReady = false;
-  atlasImg.onload = () => { assetsReady = true; renderGrid(); };
+  let atlasReady = false;
+  atlasImg.onload = () => { atlasReady = true; renderCard(); };
   atlasImg.src = window.MC_ASSETS.atlasPng;
   const ATLAS_META = window.MC_ASSETS.atlasMeta;
 
@@ -587,500 +382,335 @@ window.MC_ASSETS = {
     return ATLAS_META.items[base] || null;
   }
 
-  const CONTAINER_COL_X = 8;   // x offset of first column
-  const TITLE_BAR_HEIGHT = 18;
-
-  function guiWidthPx(){ return 176; }
-  function guiHeightPx(rows){ return TITLE_BAR_HEIGHT + rows * SLOT + 8; }
-
-  // ---------- grid ----------
-  function renderGrid(){
-    if (!assetsReady) return;
-    const rows = state.size / 9;
-    const canvas = document.getElementById('guiCanvas');
-    const ctx = canvas.getContext('2d');
-    ctx.imageSmoothingEnabled = false;
-
-    const wPx = guiWidthPx();
-    const hPx = guiHeightPx(rows);
-    canvas.width = wPx * SCALE;
-    canvas.height = hPx * SCALE;
-    canvas.style.width = (wPx * SCALE) + 'px';
-    canvas.style.height = (hPx * SCALE) + 'px';
-
-    ctx.clearRect(0, 0, canvas.width, canvas.height);
-
-    // panel background (flat, "close enough" fill — not a real texture crop)
-    ctx.fillStyle = '#c6c6c6';
-    ctx.fillRect(0, 0, canvas.width, canvas.height);
-    ctx.strokeStyle = '#373737';
-    ctx.lineWidth = 2 * SCALE;
-    ctx.strokeRect(1, 1, canvas.width-2, canvas.height-2);
-
-    // draw each slot as a simple inset square (bevel look), no texture cropping involved
-    function drawSlot(px, py){
-      const x = px * SCALE, y = py * SCALE, s = SLOT * SCALE;
-      ctx.fillStyle = '#8b8b8b';
-      ctx.fillRect(x, y, s, s);
-      ctx.strokeStyle = '#373737';
-      ctx.lineWidth = 1 * SCALE / 2;
-      ctx.strokeRect(x+1, y+1, s-2, s-2);
-      // subtle bevel highlight top-left, shadow bottom-right
-      ctx.strokeStyle = 'rgba(255,255,255,0.25)';
-      ctx.beginPath();
-      ctx.moveTo(x+1, y+s-2);
-      ctx.lineTo(x+1, y+1);
-      ctx.lineTo(x+s-2, y+1);
-      ctx.stroke();
-    }
-
-    for (let i = 0; i < state.size; i++){
-      const col = i % 9;
-      const row = Math.floor(i / 9);
-      const px = CONTAINER_COL_X + col * SLOT;
-      const py = TITLE_BAR_HEIGHT + row * SLOT;
-      drawSlot(px, py);
-    }
-
-    // draw items into slots (these are the real Minecraft sprites)
-    for (let i = 0; i < state.size; i++){
-      const col = i % 9;
-      const row = Math.floor(i / 9);
-      const slotX = (CONTAINER_COL_X + col * SLOT) * SCALE;
-      const slotY = (TITLE_BAR_HEIGHT + row * SLOT) * SCALE;
-
-      if (state.selectedSlot === i){
-        ctx.strokeStyle = '#2f6bff';
-        ctx.lineWidth = 2;
-        ctx.strokeRect(slotX+1, slotY+1, SLOT*SCALE-2, SLOT*SCALE-2);
-      }
-
-      const item = state.items[i];
-      if (item){
-        const sprite = spriteFor(item.material);
-        if (sprite){
-          const itemPx = 16 * SCALE;
-          const pad = Math.floor((SLOT*SCALE - itemPx) / 2);
-          ctx.drawImage(
-            atlasImg,
-            sprite.x, sprite.y, ATLAS_META.tileSize, ATLAS_META.tileSize,
-            slotX + pad, slotY + pad, itemPx, itemPx
-          );
-        }
-        if (item.amount && item.amount > 1){
-          ctx.font = `bold ${8*SCALE}px sans-serif`;
-          ctx.textAlign = 'right';
-          ctx.textBaseline = 'bottom';
-          ctx.fillStyle = '#000';
-          ctx.fillText(item.amount, slotX + SLOT*SCALE - 1, slotY + SLOT*SCALE - 1);
-          ctx.fillStyle = '#fff';
-          ctx.fillText(item.amount, slotX + SLOT*SCALE - 2, slotY + SLOT*SCALE - 2);
-        }
-      }
-    }
-
-    document.getElementById('slotCountLabel').textContent = `${Object.keys(state.items).length} / ${state.size} slotów zajętych`;
-  }
-
-  function setupCanvasClicks(){
-    const canvas = document.getElementById('guiCanvas');
-    canvas.addEventListener('click', (e) => {
-      const rect = canvas.getBoundingClientRect();
-      const scaleX = canvas.width / rect.width;
-      const scaleY = canvas.height / rect.height;
-      const clickX = (e.clientX - rect.left) * scaleX;
-      const clickY = (e.clientY - rect.top) * scaleY;
-
-      const relX = clickX / SCALE - CONTAINER_COL_X;
-      const relY = clickY / SCALE - TITLE_BAR_HEIGHT;
-      const col = Math.floor(relX / SLOT);
-      const row = Math.floor(relY / SLOT);
-      if (col < 0 || col > 8 || row < 0) return;
-      const i = row * 9 + col;
-      if (i < 0 || i >= state.size) return;
-
-      state.selectedSlot = i;
-      if (!state.items[i]) state.items[i] = newItem();
-      renderGrid();
-      renderItemEditor();
-      renderOutput();
+  function populateHeadDatalist(){
+    const dl = document.getElementById('headMaterialList');
+    dl.innerHTML = '';
+    Object.keys(ATLAS_META.items).sort().forEach(name => {
+      const opt = document.createElement('option');
+      opt.value = name;
+      dl.appendChild(opt);
     });
   }
-  setupCanvasClicks();
 
-  // ---------- item editor ----------
-  function renderItemEditor(){
-    const body = document.getElementById('itemEditorBody');
-    const label = document.getElementById('editingSlotLabel');
-    const i = state.selectedSlot;
+  // ---------- real player head fetching (with fallback chain) ----------
+  // Extracts just the 8x8 face region from a full Minecraft skin texture (the face is always at
+  // pixel (8,8) to (16,16) in the standard 64x64 or 64x32 skin layout) and returns it as a small
+  // canvas-backed <img>-like element ready to be drawn onto the card.
+  function extractFaceFromSkin(skinImg){
+    const faceCanvas = document.createElement('canvas');
+    faceCanvas.width = 8;
+    faceCanvas.height = 8;
+    const fctx = faceCanvas.getContext('2d');
+    fctx.imageSmoothingEnabled = false;
+    fctx.drawImage(skinImg, 8, 8, 8, 8, 0, 0, 8, 8);
+    const img = new Image();
+    img.src = faceCanvas.toDataURL();
+    return img;
+  }
 
-    if (i == null || !state.items[i]){
-      label.textContent = '';
-      body.innerHTML = '<div class="no-selection">Kliknij slot w podglądzie po lewej, żeby dodać lub edytować item.</div>';
+  function loadImage(src, { crossOrigin } = {}){
+    return new Promise((resolve, reject) => {
+      const img = new Image();
+      if (crossOrigin) img.crossOrigin = crossOrigin;
+      img.onload = () => resolve(img);
+      img.onerror = () => reject(new Error('image failed to load'));
+      img.src = src;
+    });
+  }
+
+  // Attempt 1: Ashcon bundles the skin texture as a base64 data URL directly in its JSON response,
+  // so the resulting <img> has no cross-origin taint and can be safely drawn to canvas + exported.
+  async function fetchHeadViaAshcon(nick){
+    const res = await fetch(`https://api.ashcon.app/mojang/v2/user/${encodeURIComponent(nick)}`);
+    if (!res.ok) throw new Error('ashcon lookup failed');
+    const data = await res.json();
+    const base64 = data && data.textures && data.textures.skin && data.textures.skin.data;
+    if (!base64) throw new Error('no skin data in ashcon response');
+    const skinImg = await loadImage(`data:image/png;base64,${base64}`);
+    return extractFaceFromSkin(skinImg);
+  }
+
+  // Attempt 2 (fallback): Crafatar needs a UUID, not a username, and this environment has no
+  // reliable CORS-friendly username->UUID service if Ashcon is down — so this path only helps
+  // when the person has typed a raw UUID directly into the nick field instead of a username.
+  async function fetchHeadViaCrafatar(uuidOrNick){
+    const looksLikeUuid = /^[0-9a-f]{8}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{4}-?[0-9a-f]{12}$/i.test(uuidOrNick.trim());
+    if (!looksLikeUuid) throw new Error('crafatar requires a UUID, not a username');
+    const img = await loadImage(`https://crafatar.com/avatars/${uuidOrNick.trim()}?size=64&overlay`, { crossOrigin: 'anonymous' });
+    return img;
+  }
+
+  async function fetchRealPlayerHead(nick){
+    const trimmed = (nick || '').trim();
+    if (!trimmed) return null;
+    const myToken = ++headFetchToken;
+    const statusEl = document.getElementById('avatarHeadStatus');
+    if (statusEl) statusEl.textContent = 'Pobieranie twarzy gracza…';
+
+    try {
+      const img = await fetchHeadViaAshcon(trimmed);
+      if (myToken !== headFetchToken) return; // a newer request superseded this one
+      headImageCache[trimmed.toLowerCase()] = img;
+      if (statusEl) statusEl.textContent = 'Pobrano prawdziwą twarz gracza (Mojang/Ashcon).';
+      renderCard();
       return;
+    } catch(e){ /* fall through to next attempt */ }
+
+    try {
+      const img = await fetchHeadViaCrafatar(trimmed);
+      if (myToken !== headFetchToken) return;
+      headImageCache[trimmed.toLowerCase()] = img;
+      if (statusEl) statusEl.textContent = 'Pobrano awatar (Crafatar).';
+      renderCard();
+      return;
+    } catch(e){ /* fall through to fallback icon */ }
+
+    if (myToken !== headFetchToken) return;
+    if (statusEl) statusEl.textContent = 'Nie udało się pobrać twarzy gracza (brak internetu albo serwis niedostępny) — użyto ikony bloku jako zastępstwa.';
+    renderCard();
+  }
+
+  // Discord's CDN (cdn.discordapp.com) serves avatars with CORS enabled, so a plain <img> with
+  // crossOrigin='anonymous' works directly — no proxy or base64 workaround needed here, unlike
+  // the Minecraft head fetch above.
+  async function fetchDiscordAvatar(url){
+    const trimmed = (url || '').trim();
+    if (!trimmed) return;
+    const myToken = ++discordFetchToken;
+    const statusEl = document.getElementById('avatarDiscordStatus');
+    if (statusEl) statusEl.textContent = 'Pobieranie avatara…';
+
+    try {
+      const img = await loadImage(trimmed, { crossOrigin: 'anonymous' });
+      if (myToken !== discordFetchToken) return;
+      discordImageCache[trimmed] = img;
+      if (statusEl) statusEl.textContent = 'Pobrano avatar Discord.';
+      renderCard();
+    } catch(e){
+      if (myToken !== discordFetchToken) return;
+      if (statusEl) statusEl.textContent = 'Nie udało się pobrać avatara (zły URL albo serwis niedostępny) — użyto ikony bloku jako zastępstwa.';
+      renderCard();
     }
-
-    label.textContent = `— slot ${i}`;
-    const item = state.items[i];
-
-    body.innerHTML = `
-      <div class="field">
-        <label class="flabel">Materiał</label>
-        <input type="text" id="materialInput" list="materialList" value="${escapeAttr(item.material)}">
-        <datalist id="materialList">
-          ${MATERIALS.map(m => `<option value="${m}">`).join('')}
-        </datalist>
-      </div>
-      <div class="field">
-        <label class="flabel">Ilość</label>
-        <input type="number" id="amountInput" min="1" max="64" value="${item.amount}">
-      </div>
-      <div class="field">
-        <label class="flabel">Nazwa (display_name)</label>
-        <input type="text" id="displayNameInput" value="${escapeAttr(item.displayName)}">
-      </div>
-      <div class="field">
-        <label class="flabel">Lore (opis)</label>
-        <div class="lore-list" id="loreList"></div>
-        <button class="add-btn" id="addLoreBtn">+ Dodaj linię lore</button>
-      </div>
-      <div class="commands-group">
-        <span class="name">Lewy klik (left_click_commands)</span>
-        <div class="commands-list" id="leftCmdList"></div>
-        <button class="add-btn" id="addLeftCmdBtn">+ Dodaj komendę</button>
-      </div>
-      <div class="commands-group">
-        <span class="name">Prawy klik (right_click_commands)</span>
-        <div class="commands-list" id="rightCmdList"></div>
-        <button class="add-btn" id="addRightCmdBtn">+ Dodaj komendę</button>
-      </div>
-      <button class="add-btn" id="removeItemBtn" style="margin-top:14px;border-color:#e5484d55;color:#e5484d;">Usuń item z tego slotu</button>
-    `;
-
-    document.getElementById('materialInput').addEventListener('input', (e) => {
-      item.material = e.target.value;
-      renderGrid(); renderOutput();
-    });
-    document.getElementById('amountInput').addEventListener('input', (e) => {
-      item.amount = Math.max(1, Math.min(64, +e.target.value || 1));
-      renderGrid(); renderOutput();
-    });
-    document.getElementById('displayNameInput').addEventListener('input', (e) => {
-      item.displayName = e.target.value;
-      renderOutput();
-    });
-
-    renderStringList(item.lore, 'loreList', () => { renderOutput(); });
-    document.getElementById('addLoreBtn').addEventListener('click', () => {
-      item.lore.push('');
-      renderItemEditor(); renderOutput();
-    });
-
-    renderCommandList(item.leftClickCommands, 'leftCmdList', () => { renderOutput(); });
-    document.getElementById('addLeftCmdBtn').addEventListener('click', () => {
-      item.leftClickCommands.push(newActionInstance('close_menu'));
-      renderItemEditor(); renderOutput();
-    });
-
-    renderCommandList(item.rightClickCommands, 'rightCmdList', () => { renderOutput(); });
-    document.getElementById('addRightCmdBtn').addEventListener('click', () => {
-      item.rightClickCommands.push(newActionInstance('close_menu'));
-      renderItemEditor(); renderOutput();
-    });
-
-    document.getElementById('removeItemBtn').addEventListener('click', () => {
-      delete state.items[i];
-      state.selectedSlot = null;
-      renderGrid(); renderItemEditor(); renderOutput();
-    });
   }
 
-  // generic renderer for an array-of-strings editable list (lore or commands)
-  function renderStringList(arr, containerId, onChange){
-    const list = document.getElementById(containerId);
-    list.innerHTML = '';
-    arr.forEach((val, idx) => {
-      const row = document.createElement('div');
-      row.className = 'lore-row';
-      row.innerHTML = `
-        <input type="text" data-idx="${idx}" value="${escapeAttr(val)}">
-        <button class="btn-mini rm" data-idx="${idx}">×</button>
-      `;
-      list.appendChild(row);
-    });
-    list.querySelectorAll('input[type=text]').forEach(inp => {
-      inp.addEventListener('input', () => {
-        arr[+inp.dataset.idx] = inp.value;
-        onChange();
-      });
-    });
-    list.querySelectorAll('.rm').forEach(btn => {
-      btn.addEventListener('click', () => {
-        arr.splice(+btn.dataset.idx, 1);
-        renderItemEditor();
-        onChange();
-      });
-    });
+  // ---------- card rendering ----------
+  const CARD_W = 700;
+  const CARD_H = 220;
+  const SCALE = 2;
+
+  function drawRoundedRect(ctx, x, y, w, h, r){
+    ctx.beginPath();
+    ctx.moveTo(x+r, y);
+    ctx.arcTo(x+w, y, x+w, y+h, r);
+    ctx.arcTo(x+w, y+h, x, y+h, r);
+    ctx.arcTo(x, y+h, x, y, r);
+    ctx.arcTo(x, y, x+w, y, r);
+    ctx.closePath();
   }
 
-  // Renders a click-action list (left or right click) as a picker: each row has a dropdown
-  // choosing the action TYPE (close menu, console command, ban player, grant permission, etc.)
-  // and, once a type is chosen, only the fields that type actually needs — instead of one
-  // free-text field where the person has to already know and type prefixes like "[console]".
-  function renderCommandList(arr, containerId, onChange){
-    const list = document.getElementById(containerId);
-    list.innerHTML = '';
-    arr.forEach((action, idx) => {
-      const def = ACTION_TYPES[action.type];
-      const row = document.createElement('div');
-      row.className = 'command-row';
-      row.innerHTML = `
-        <div class="command-row-top">
-          <select data-idx="${idx}" class="action-type-select">
-            ${Object.entries(ACTION_TYPES).map(([key, d]) => `<option value="${key}" ${key === action.type ? 'selected' : ''}>${d.label}</option>`).join('')}
-          </select>
-          <button class="btn-mini rm" data-idx="${idx}">×</button>
-        </div>
-        <div class="command-row-fields" id="${containerId}-fields-${idx}"></div>
-      `;
-      list.appendChild(row);
+  function renderCard(){
+    const canvas = document.getElementById('cardCanvas');
+    const ctx = canvas.getContext('2d');
+    canvas.width = CARD_W * SCALE;
+    canvas.height = CARD_H * SCALE;
+    ctx.imageSmoothingEnabled = true;
+    ctx.save();
+    ctx.scale(SCALE, SCALE);
 
-      const fieldsEl = row.querySelector(`#${containerId}-fields-${idx}`);
-      if (def){
-        Object.entries(def.fields).forEach(([fieldKey, spec]) => {
-          const fieldWrap = document.createElement('div');
-          fieldWrap.className = 'command-field';
-          fieldWrap.innerHTML = `
-            <label class="flabel-mini">${spec.label}</label>
-            <input type="text" data-idx="${idx}" data-field="${fieldKey}" value="${escapeAttr(action.fields[fieldKey] || '')}">
-          `;
-          fieldsEl.appendChild(fieldWrap);
-        });
+    // background gradient (dark, subtly tinted with theme color), left-to-right
+    const bgGrad = ctx.createLinearGradient(0, 0, CARD_W, 0);
+    bgGrad.addColorStop(0, mixHex('#15151b', state.themeColor, 0.10));
+    bgGrad.addColorStop(1, '#0d0d11');
+    ctx.fillStyle = bgGrad;
+    drawRoundedRect(ctx, 0, 0, CARD_W, CARD_H, 16);
+    ctx.fill();
+
+    // border, colored by theme
+    ctx.strokeStyle = state.themeColor;
+    ctx.lineWidth = 2;
+    drawRoundedRect(ctx, 1, 1, CARD_W-2, CARD_H-2, 15);
+    ctx.stroke();
+
+    // left accent bar
+    ctx.fillStyle = state.themeColor;
+    drawRoundedRect(ctx, 0, 0, 6, CARD_H, 3);
+    ctx.fill();
+
+    // avatar, vertically centered on the left side, with glow ring in theme color
+    const avatarSize = 120;
+    const avatarX = 50;
+    const avatarY = CARD_H/2 - avatarSize/2;
+    const avatarCenterX = avatarX + avatarSize/2;
+    const avatarCenterY = CARD_H/2;
+
+    ctx.save();
+    ctx.shadowColor = state.themeColor;
+    ctx.shadowBlur = 20;
+    ctx.beginPath();
+    ctx.arc(avatarCenterX, avatarCenterY, avatarSize/2 + 7, 0, Math.PI*2);
+    ctx.strokeStyle = state.themeColor;
+    ctx.lineWidth = 4;
+    ctx.stroke();
+    ctx.restore();
+
+    ctx.imageSmoothingEnabled = false;
+    const cachedHead = state.avatarMode === 'head' ? headImageCache[state.avatarNick.toLowerCase()] : null;
+    const cachedDiscord = state.avatarMode === 'discord' ? discordImageCache[state.avatarDiscordUrl.trim()] : null;
+    if (state.avatarMode === 'discord' && cachedDiscord && cachedDiscord.complete && cachedDiscord.naturalWidth > 0){
+      // Discord avatars are photographic, not pixel art — smooth them and clip to a circle
+      ctx.imageSmoothingEnabled = true;
+      ctx.save();
+      ctx.beginPath();
+      ctx.arc(avatarCenterX, avatarCenterY, avatarSize/2, 0, Math.PI*2);
+      ctx.clip();
+      ctx.drawImage(cachedDiscord, avatarX, avatarY, avatarSize, avatarSize);
+      ctx.restore();
+    } else if (state.avatarMode === 'head' && cachedHead && cachedHead.complete && cachedHead.naturalWidth > 0){
+      // real Minecraft face, fetched via API — drawn pixelated to match the rest of the banner's style
+      ctx.drawImage(cachedHead, avatarX, avatarY, avatarSize, avatarSize);
+    } else if (atlasReady){
+      // fallback: block/item icon from the local texture atlas (always available, no network needed)
+      const sprite = spriteFor(state.headMaterial);
+      if (sprite){
+        ctx.drawImage(atlasImg, sprite.x, sprite.y, ATLAS_META.tileSize, ATLAS_META.tileSize, avatarX, avatarY, avatarSize, avatarSize);
       }
-    });
-
-    list.querySelectorAll('.action-type-select').forEach(sel => {
-      sel.addEventListener('change', () => {
-        const idx = +sel.dataset.idx;
-        arr[idx] = newActionInstance(sel.value);
-        renderCommandList(arr, containerId, onChange);
-        onChange();
-      });
-    });
-    list.querySelectorAll('.command-field input').forEach(inp => {
-      inp.addEventListener('input', () => {
-        const idx = +inp.dataset.idx;
-        arr[idx].fields[inp.dataset.field] = inp.value;
-        onChange();
-      });
-    });
-    list.querySelectorAll('.rm').forEach(btn => {
-      btn.addEventListener('click', () => {
-        arr.splice(+btn.dataset.idx, 1);
-        renderItemEditor();
-        onChange();
-      });
-    });
-  }
-
-  function escapeAttr(s){
-    return String(s).replace(/&/g,'&amp;').replace(/"/g,'&quot;');
-  }
-
-  // ---------- YAML output ----------
-  function yamlEscape(str){
-    return '"' + String(str).replace(/\\/g, '\\\\').replace(/"/g, '\\"') + '"';
-  }
-
-  function skriptQuote(str){
-    return '"' + String(str).replace(/"/g, '""') + '"';
-  }
-
-  function buildDeluxeMenusOutput(){
-    let out = `menu_title: ${yamlEscape(state.menuTitle)}\n`;
-    out += `open_command: ${state.openCommand}\n`;
-    out += `size: ${state.size}\n`;
-    out += `items:\n`;
-
-    const slots = Object.keys(state.items).map(Number).sort((a,b) => a - b);
-    if (slots.length === 0){
-      out += `  {}\n`;
-    } else {
-      slots.forEach(slot => {
-        const item = state.items[slot];
-        out += `  '${slot + 1}':\n`;
-        out += `    material: ${item.material}\n`;
-        if (item.amount && item.amount !== 1) out += `    amount: ${item.amount}\n`;
-        out += `    slot: ${slot}\n`;
-        out += `    display_name: ${yamlEscape(item.displayName)}\n`;
-        if (item.lore.length){
-          out += `    lore:\n`;
-          item.lore.forEach(l => { out += `    - ${yamlEscape(l)}\n`; });
-        }
-        if (item.leftClickCommands.length){
-          out += `    left_click_commands:\n`;
-          item.leftClickCommands.forEach(c => {
-            const def = ACTION_TYPES[c.type];
-            if (def) out += `    - ${yamlEscape(def.toYamlLine(c.fields))}\n`;
-          });
-        }
-        if (item.rightClickCommands.length){
-          out += `    right_click_commands:\n`;
-          item.rightClickCommands.forEach(c => {
-            const def = ACTION_TYPES[c.type];
-            if (def) out += `    - ${yamlEscape(def.toYamlLine(c.fields))}\n`;
-          });
-        }
-      });
     }
-    return out;
-  }
+    ctx.imageSmoothingEnabled = true;
 
-  function buildSkriptOutput(){
-    const slots = Object.keys(state.items).map(Number).sort((a,b) => a - b);
-    const rows = state.size / 9;
-    const cappedRows = Math.min(rows, 6); // this Skript setup caps chest GUIs at 6 rows — slots beyond that silently never render
-    const menuName = state.menuTitle.replace(/&[0-9a-fk-or]/gi, '').trim() || 'Menu';
+    // text block, right of the avatar
+    const textX = avatarX + avatarSize + 40;
+    const textMaxWidth = CARD_W - textX - 40;
+    ctx.textAlign = 'left';
 
-    let out = '';
-    if (rows > 6){
-      out += `# UWAGA: ${rows} rzędów przekracza limit 6 rzędów dla open chest inventory w tym środowisku Skript.\n`;
-      out += `# Sloty od rzędu 7 wzwyż nie wyrenderują się. Rozważ zmniejszenie rozmiaru menu w kreatorze do max 6 rzędów (54 sloty).\n\n`;
-    }
+    // welcome text (large, theme-colored)
+    ctx.fillStyle = state.themeColor;
+    ctx.font = 'bold 26px -apple-system, sans-serif';
+    ctx.fillText(state.welcomeText || 'Witaj!', textX, CARD_H/2 - 24, textMaxWidth);
 
-    out += `command /${state.openCommand || 'menu'}:\n`;
-    out += `\ttrigger:\n`;
-    out += `\t\topen chest inventory with ${cappedRows} rows named ${skriptQuote(state.menuTitle)} to player\n`;
-    out += `\t\twait 1 tick\n`;
-    if (slots.length === 0){
-      out += `\t\t# brak przedmiotów w menu — dodaj sloty w kreatorze\n`;
-    } else {
-      slots.forEach(slot => {
-        const item = state.items[slot];
-        out += `\t\tset slot ${slot} of player's current inventory to ${item.material.toLowerCase()} named ${skriptQuote(item.displayName)}`;
-        if (item.lore.length){
-          out += ` with lore ${item.lore.map(l => skriptQuote(l)).join(' and ')}`;
-        }
-        out += `\n`;
-      });
-    }
+    // nick (large, white)
+    ctx.fillStyle = '#f2f2f5';
+    ctx.font = 'bold 32px -apple-system, sans-serif';
+    ctx.fillText(state.nick || 'Gracz', textX, CARD_H/2 + 12, textMaxWidth);
 
-    out += `\non inventory click:\n`;
-    out += `\tif unformatted name of event-inventory contains ${skriptQuote(menuName)}:\n`;
-    out += `\t\tcancel event\n`;
-    out += `\t\tif "%click type%" contains "SHIFT":\n`;
-    out += `\t\t\tstop trigger\n`;
-    out += `\t\tset {_slot} to index of event-slot\n`;
-    if (slots.length === 0){
-      out += `\t\t# brak przedmiotów w menu — dodaj sloty w kreatorze\n`;
-    } else {
-      slots.forEach((slot, i) => {
-        const item = state.items[slot];
-        const kw = i === 0 ? 'if' : 'else if';
-        out += `\t\t${kw} {_slot} is ${slot}:\n`;
-        if (item.leftClickCommands.length && item.rightClickCommands.length){
-          out += `\t\t\tif "%click type%" contains "RIGHT":\n`;
-          item.rightClickCommands.forEach(c => {
-            const def = ACTION_TYPES[c.type];
-            if (def) out += `\t\t\t\t${def.toSkript(c.fields)}\n`;
-          });
-          out += `\t\t\telse:\n`;
-          item.leftClickCommands.forEach(c => {
-            const def = ACTION_TYPES[c.type];
-            if (def) out += `\t\t\t\t${def.toSkript(c.fields)}\n`;
-          });
-        } else if (item.leftClickCommands.length){
-          item.leftClickCommands.forEach(c => {
-            const def = ACTION_TYPES[c.type];
-            if (def) out += `\t\t\t${def.toSkript(c.fields)}\n`;
-          });
-        } else if (item.rightClickCommands.length){
-          item.rightClickCommands.forEach(c => {
-            const def = ACTION_TYPES[c.type];
-            if (def) out += `\t\t\t${def.toSkript(c.fields)}\n`;
-          });
-        } else {
-          out += `\t\t\t# brak komend dla tego slotu\n`;
-        }
-      });
-    }
+    // subtitle
+    ctx.fillStyle = '#8b8b96';
+    ctx.font = '15px -apple-system, sans-serif';
+    ctx.fillText(state.subtitle || '', textX, CARD_H/2 + 40, textMaxWidth);
 
-    out += `\non inventory drag:\n`;
-    out += `\tif unformatted name of event-inventory contains ${skriptQuote(menuName)}:\n`;
-    out += `\t\tcancel event\n`;
+    // footer
+    ctx.textAlign = 'center';
+    ctx.font = '10px -apple-system, sans-serif';
+    ctx.fillStyle = '#5a5a66';
+    ctx.fillText('Enchant SMP • enchantsmp.pl', CARD_W/2, CARD_H - 14);
 
-    return out;
-  }
-
-  // Translates the DeluxeMenus-style click action strings (e.g. "[close]", "[console] give ...")
-  // into their closest Skript equivalent line.
-  function skriptCommandLine(cmd){
-    const trimmed = cmd.trim();
-    if (trimmed === '[close]') return 'close player\'s inventory';
-    const consoleMatch = trimmed.match(/^\[console\]\s*(.+)$/i);
-    if (consoleMatch) return `execute console command "${consoleMatch[1].replace(/"/g,'""')}"`;
-    const playerMatch = trimmed.match(/^\[player\]\s*(.+)$/i);
-    if (playerMatch) return `execute player command "${playerMatch[1].replace(/"/g,'""')}"`;
-    const messageMatch = trimmed.match(/^\[message\]\s*(.+)$/i);
-    if (messageMatch) return `send "${messageMatch[1].replace(/"/g,'""')}" to player`;
-    // fallback: treat as a raw command to run as the player
-    return `execute player command "${trimmed.replace(/"/g,'""')}"`;
-  }
-
-  function renderOutput(){
-    const out = state.outputFormat === 'skript' ? buildSkriptOutput() : buildDeluxeMenusOutput();
-    document.getElementById('outputCode').textContent = out;
-    document.getElementById('outputHint').innerHTML = state.outputFormat === 'skript'
-      ? 'Wklej to jako osobny plik w <b>plugins/Skript/scripts/twoje_menu.sk</b>. GUI ogranicza się do 6 rzędów (typowy limit w Skript), blokuje shift-click i przeciąganie. Nierozpoznane komendy klik-akcji (poza [close]/[console]/[player]/[message]) trafiają jako zwykłe <code>execute player command</code> — sprawdź je ręcznie.'
-      : 'Wklej to jako zawartość pliku w <b>plugins/DeluxeMenus/gui_menus/twoje_menu.yml</b>, albo pod nazwą menu w sekcji <b>gui_menus</b> configu.';
-    document.getElementById('openInBlockBuilderBtn').style.display = state.outputFormat === 'skript' ? 'block' : 'none';
+    ctx.restore();
+    document.getElementById('dimsLabel').textContent = `${CARD_W} × ${CARD_H} px`;
   }
 
   // ---------- events ----------
-  document.getElementById('openInBlockBuilderBtn').addEventListener('click', () => {
-    const code = document.getElementById('outputCode').textContent;
-    try {
-      localStorage.setItem('enchant-skript-bridge-import', code);
-    } catch(e){
-      alert('Nie udało się przekazać kodu (localStorage niedostępny w tej przeglądarce). Skopiuj kod ręcznie i wklej go przez "Importuj .sk" w kreatorze bloków.');
-      return;
-    }
-    window.location.href = 'kreator-skript-bloki.html?import=1';
+  function bindInput(id, stateKey){
+    document.getElementById(id).addEventListener('input', (e) => {
+      state[stateKey] = e.target.value;
+      renderCard();
+    });
+  }
+  bindInput('nickInput', 'nick');
+  bindInput('welcomeTextInput', 'welcomeText');
+  bindInput('subtitleInput', 'subtitle');
+
+  document.getElementById('headMaterialInput').addEventListener('input', (e) => {
+    state.headMaterial = e.target.value.trim();
+    renderCard();
   });
 
-  document.getElementById('menuTitleInput').addEventListener('input', (e) => {
-    state.menuTitle = e.target.value;
-    renderOutput();
-  });
-  document.getElementById('openCommandInput').addEventListener('input', (e) => {
-    state.openCommand = e.target.value.trim() || 'menu';
-    renderOutput();
-  });
-
-  document.getElementById('outputFormatSeg').addEventListener('click', (e) => {
+  document.getElementById('avatarModeSeg').addEventListener('click', (e) => {
     const btn = e.target.closest('button');
     if (!btn) return;
-    state.outputFormat = btn.dataset.val;
-    document.querySelectorAll('#outputFormatSeg button').forEach(b => b.classList.toggle('active', b === btn));
-    renderOutput();
+    state.avatarMode = btn.dataset.val;
+    document.querySelectorAll('#avatarModeSeg button').forEach(b => b.classList.toggle('active', b === btn));
+    document.getElementById('avatarHeadFields').style.display = state.avatarMode === 'head' ? 'block' : 'none';
+    document.getElementById('avatarDiscordFields').style.display = state.avatarMode === 'discord' ? 'block' : 'none';
+    document.getElementById('avatarBlockFields').style.display = state.avatarMode === 'block' ? 'block' : 'none';
+    if (state.avatarMode === 'head' && !headImageCache[state.avatarNick.toLowerCase()]){
+      fetchRealPlayerHead(state.avatarNick);
+    }
+    if (state.avatarMode === 'discord' && state.avatarDiscordUrl.trim() && !discordImageCache[state.avatarDiscordUrl.trim()]){
+      fetchDiscordAvatar(state.avatarDiscordUrl);
+    }
+    renderCard();
   });
 
-  document.getElementById('copyBtn').addEventListener('click', () => {
-    const code = document.getElementById('outputCode').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      const btn = document.getElementById('copyBtn');
-      const original = btn.textContent;
-      btn.textContent = 'Skopiowano!';
-      btn.classList.add('copied');
-      setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+  let avatarNickDebounce = null;
+  document.getElementById('avatarNickInput').addEventListener('input', (e) => {
+    state.avatarNick = e.target.value;
+    renderCard(); // immediately falls back to the block icon while the new nick is looked up
+    clearTimeout(avatarNickDebounce);
+    avatarNickDebounce = setTimeout(() => {
+      if (state.avatarMode === 'head') fetchRealPlayerHead(state.avatarNick);
+    }, 600);
+  });
+
+  let avatarDiscordDebounce = null;
+  document.getElementById('avatarDiscordInput').addEventListener('input', (e) => {
+    state.avatarDiscordUrl = e.target.value;
+    renderCard();
+    clearTimeout(avatarDiscordDebounce);
+    avatarDiscordDebounce = setTimeout(() => {
+      if (state.avatarMode === 'discord') fetchDiscordAvatar(state.avatarDiscordUrl);
+    }, 600);
+  });
+
+  document.getElementById('themeColorPicker').addEventListener('input', (e) => {
+    state.themeColor = e.target.value;
+    document.getElementById('themeColorHex').value = e.target.value;
+    renderCard();
+  });
+  document.getElementById('themeColorHex').addEventListener('input', (e) => {
+    const v = e.target.value.trim();
+    if (/^#?[0-9a-fA-F]{6}$/.test(v)){
+      state.themeColor = v.startsWith('#') ? v : '#'+v;
+      document.getElementById('themeColorPicker').value = state.themeColor;
+      renderCard();
+    }
+  });
+
+  function renderColorPresets(){
+    const grid = document.getElementById('colorPresetsGrid');
+    grid.innerHTML = '';
+    Object.entries(COLOR_PRESETS).forEach(([name, hex]) => {
+      const btn = document.createElement('button');
+      btn.innerHTML = `<span class="swatch" style="background:${hex};"></span>${name}`;
+      btn.addEventListener('click', () => {
+        state.themeColor = hex;
+        document.getElementById('themeColorPicker').value = hex;
+        document.getElementById('themeColorHex').value = hex;
+        renderCard();
+      });
+      grid.appendChild(btn);
     });
+  }
+
+  document.getElementById('downloadBtn').addEventListener('click', () => {
+    const canvas = document.getElementById('cardCanvas');
+    try {
+      const dataUrl = canvas.toDataURL('image/png');
+      const link = document.createElement('a');
+      const safeName = (state.nick || 'gracz').replace(/[^a-zA-Z0-9_-]/g, '_');
+      link.download = `karta-${safeName}.png`;
+      link.href = dataUrl;
+      link.click();
+    } catch(e){
+      // canvas is "tainted" by a cross-origin image without proper CORS headers — this can only
+      // happen with the Crafatar fallback path, since the Ashcon path uses a same-origin data URL.
+      alert('Nie udało się wyeksportować karty, ponieważ pobrany awatar pochodzi z serwisu bez pełnego wsparcia CORS. Spróbuj przełączyć na "Ikona bloku/itemu" i pobierz ponownie, albo spróbuj jeszcze raz za chwilę.');
+    }
   });
 
   // ---------- init ----------
-  renderSizeRow();
-  renderGrid();
-  renderItemEditor();
-  renderOutput();
+  renderColorPresets();
+  renderCard();
+  populateHeadDatalist();
+  if (state.avatarMode === 'head') fetchRealPlayerHead(state.avatarNick);
 })();
 </script>
 </body>

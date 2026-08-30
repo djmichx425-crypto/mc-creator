@@ -927,14 +927,49 @@ window.MC_ASSETS = {
     renderOutput();
   });
 
+
+  function copyViaExecCommand(text){
+    return new Promise((resolve, reject) => {
+      const textarea = document.createElement('textarea');
+      textarea.value = text;
+      textarea.style.position = 'fixed';
+      textarea.style.left = '-9999px';
+      textarea.style.top = '0';
+      document.body.appendChild(textarea);
+      textarea.focus();
+      textarea.select();
+      try {
+        const ok = document.execCommand('copy');
+        document.body.removeChild(textarea);
+        if (ok) resolve(); else reject(new Error('execCommand copy returned false'));
+      } catch(err){
+        document.body.removeChild(textarea);
+        reject(err);
+      }
+    });
+  }
+
+  function copyTextToClipboard(text){
+    // navigator.clipboard requires a secure context and can still silently fail even when
+    // present (permission denied, restricted webview, file:// pages, etc.) — so rather than
+    // giving up if it fails, always fall back to the older execCommand method via a temporary
+    // textarea, which works in far more environments.
+    if (navigator.clipboard && navigator.clipboard.writeText){
+      return navigator.clipboard.writeText(text).catch(() => copyViaExecCommand(text));
+    }
+    return copyViaExecCommand(text);
+  }
+
   document.getElementById('copyBtn').addEventListener('click', () => {
     const code = document.getElementById('outputCode').textContent;
-    navigator.clipboard.writeText(code).then(() => {
-      const btn = document.getElementById('copyBtn');
+    const btn = document.getElementById('copyBtn');
+    copyTextToClipboard(code).then(() => {
       const original = btn.textContent;
       btn.textContent = 'Skopiowano!';
       btn.classList.add('copied');
       setTimeout(() => { btn.textContent = original; btn.classList.remove('copied'); }, 1500);
+    }).catch(() => {
+      alert('Nie udało się skopiować automatycznie. Zaznacz kod ręcznie w polu powyżej i skopiuj go.');
     });
   });
 
