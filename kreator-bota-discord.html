@@ -80,6 +80,8 @@
   header .hbtn:hover { border-color: var(--accent); background: var(--bg-2); }
   header .hbtn.primary { background: var(--accent); border-color: var(--accent); }
   header .hbtn.primary:hover { background: var(--accent-dim); }
+  header .hbtn:disabled { opacity: 0.35; cursor: not-allowed; }
+  header .hbtn:disabled:hover { border-color: var(--line); background: var(--bg-1); }
   header input[type=file] { display: none; }
 
   .main {
@@ -660,6 +662,46 @@
     cursor: pointer;
   }
   .template-item button:hover { background: var(--accent-dim); }
+
+  .my-template-item {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .my-template-item .mt-label {
+    font-weight: 700;
+    font-size: 13.5px;
+    flex: 1;
+  }
+  .my-template-item .mt-insert {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 7px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .my-template-item .mt-insert:hover { background: var(--accent-dim); }
+  .my-template-item .mt-delete {
+    background: none;
+    border: 1px solid var(--line);
+    color: #e5484d;
+    border-radius: 7px;
+    width: 32px; height: 32px;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .my-template-item .mt-delete:hover { background: rgba(229,72,77,0.12); border-color: #e5484d; }
 </style>
 </head>
 <body>
@@ -670,7 +712,10 @@
     <h1>Kreator Bota Discord</h1>
     <div class="sub">bloki jak Scratch → gotowy kod Python (discord.py)</div>
     <div class="spacer"></div>
+    <button class="hbtn" id="btnUndo" title="Cofnij (Ctrl+Z)" disabled>↶</button>
+    <button class="hbtn" id="btnRedo" title="Ponów (Ctrl+Y)" disabled>↷</button>
     <button class="hbtn primary" id="btnTemplates">📚 <span class="hbtn-label">Biblioteka szablonów</span></button>
+    <button class="hbtn" id="btnMyTemplates">⭐ <span class="hbtn-label">Moje szablony</span></button>
     <button class="hbtn" id="btnImportSk">📄 <span class="hbtn-label">Importuj .sk</span></button>
     <button class="hbtn" id="btnImportJson">📂 <span class="hbtn-label">Importuj JSON</span></button>
     <button class="hbtn" id="btnExportJson">💾 <span class="hbtn-label">Eksport JSON</span></button>
@@ -749,6 +794,41 @@
     </div>
     <div class="modal-foot">
       <button class="secondary" data-close-modal="templatesModal">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- MY TEMPLATES MODAL: user's own saved fragments (localStorage-backed) -->
+<div class="modal-overlay" id="myTemplatesModal">
+  <div class="modal">
+    <div class="modal-head">Moje szablony
+      <button class="close" data-close-modal="myTemplatesModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-hint" style="margin-top:0; margin-bottom:14px;">Twoje własne zapisane fragmenty drzewa bloków — zapisywane tylko w tej przeglądarce. Zapisz obecny workspace jako szablon, żeby wstawić go ponownie później albo w innym bocie.</div>
+      <button class="secondary" id="btnSaveAsMyTemplate" style="width:100%; margin-bottom:14px;">💾 Zapisz obecny workspace jako nowy szablon</button>
+      <div id="myTemplatesList"></div>
+      <div id="myTemplatesEmpty" class="modal-hint" style="display:none;">Nie masz jeszcze żadnych zapisanych szablonów. Zbuduj coś w workspace i kliknij przycisk powyżej.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="myTemplatesModal">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVE TEMPLATE NAME MODAL -->
+<div class="modal-overlay" id="saveTemplateNameModal">
+  <div class="modal" style="width:min(420px,90vw);">
+    <div class="modal-head">Nazwa szablonu
+      <button class="close" data-close-modal="saveTemplateNameModal">×</button>
+    </div>
+    <div class="modal-body">
+      <label class="flabel" style="display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:7px;">Jak nazwać ten szablon?</label>
+      <input type="text" id="saveTemplateNameInput" placeholder="np. Mój system moderacji" style="width:100%; background:var(--bg-1); border:1px solid var(--line); border-radius:8px; padding:9px 12px; color:var(--text); font-family:inherit; font-size:13px;">
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="saveTemplateNameModal">Anuluj</button>
+      <button id="btnConfirmSaveTemplate">Zapisz</button>
     </div>
   </div>
 </div>
@@ -2862,6 +2942,64 @@
   let idCounter = 1;
   function nextId(){ return 'b' + (idCounter++); }
 
+  // ============================================================
+  // UNDO / REDO
+  // Snapshot-based: on every structural change (add/remove/move block), the
+  // resulting state.root is pushed onto historyStack as a new point, and
+  // historyIndex moves to it. Undo/redo step the index back and forth,
+  // restoring that snapshot. Field edits (typing in a text input) do NOT
+  // create snapshots — only renderWorkspace() (called for structural
+  // changes) does, so undo steps through meaningful actions rather than
+  // every keystroke.
+  // ============================================================
+  const HISTORY_LIMIT = 50;
+  let historyStack = [];
+  let historyIndex = -1;
+  let isRestoringHistory = false; // guards against undo/redo itself creating a new snapshot
+
+  function pushHistorySnapshot(){
+    if (isRestoringHistory) return;
+    const snapshot = JSON.stringify(state.root);
+    if (historyStack.length && historyStack[historyIndex] === snapshot) return;
+    // Discard the "future" redo branch once a new edit is made from an earlier undo point.
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(snapshot);
+    if (historyStack.length > HISTORY_LIMIT){
+      historyStack.shift();
+    } else {
+      historyIndex++;
+    }
+    updateUndoRedoButtons();
+  }
+
+  function undo(){
+    if (historyIndex <= 0) return;
+    historyIndex--;
+    isRestoringHistory = true;
+    state.root = JSON.parse(historyStack[historyIndex]);
+    renderWorkspace();
+    isRestoringHistory = false;
+    updateUndoRedoButtons();
+  }
+
+  function redo(){
+    if (historyIndex >= historyStack.length - 1) return;
+    historyIndex++;
+    isRestoringHistory = true;
+    state.root = JSON.parse(historyStack[historyIndex]);
+    renderWorkspace();
+    isRestoringHistory = false;
+    updateUndoRedoButtons();
+  }
+
+  function updateUndoRedoButtons(){
+    const undoBtn = document.getElementById('btnUndo');
+    const redoBtn = document.getElementById('btnRedo');
+    if (!undoBtn || !redoBtn) return;
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= historyStack.length - 1;
+  }
+
   const state = {
     root: [],
     targetContainerId: null, // null = root; otherwise the id of a container block to append into (tap-to-add mode)
@@ -3148,6 +3286,7 @@
   // and — for container block types — a nested block-list for children.
   // ============================================================
   function renderWorkspace(){
+    pushHistorySnapshot();
     const rootList = document.getElementById('rootList');
     rootList.innerHTML = '';
     renderBlockList(state.root, rootList);
@@ -4473,6 +4612,121 @@
     document.getElementById('templatesModal').classList.add('show');
   });
 
+  // ---- My Templates (user's own saved fragments, localStorage-backed) ----
+  const MY_TEMPLATES_STORAGE_KEY = 'enchant-discordbot-my-templates';
+
+  function loadMyTemplates(){
+    try {
+      const raw = localStorage.getItem(MY_TEMPLATES_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch(e){ return []; } // corrupted or inaccessible storage — treat as empty rather than crashing
+  }
+
+  function saveMyTemplates(list){
+    try {
+      localStorage.setItem(MY_TEMPLATES_STORAGE_KEY, JSON.stringify(list));
+      return true;
+    } catch(e){ return false; } // localStorage full or unavailable (e.g. private browsing)
+  }
+
+  // Independent from the reassignIds/reassignConditionIds nested inside importJsonText (those
+  // are locally scoped there) — functionally identical, since inserting a saved template is the
+  // same operation as importing a small JSON fragment: fresh ids avoid collisions with whatever's
+  // already in the workspace.
+  function reassignConditionIdsForTemplate(cond){
+    if (!cond) return cond;
+    return {
+      ...cond,
+      id: nextId(),
+      left: cond.left ? reassignConditionIdsForTemplate(cond.left) : cond.left,
+      right: cond.right ? reassignConditionIdsForTemplate(cond.right) : cond.right,
+    };
+  }
+  function reassignIdsForTemplate(list){
+    return list.map(block => ({
+      ...block,
+      id: nextId(),
+      children: block.children ? reassignIdsForTemplate(block.children) : block.children,
+      conditionBlock: block.conditionBlock ? reassignConditionIdsForTemplate(block.conditionBlock) : block.conditionBlock,
+    }));
+  }
+
+  function renderMyTemplatesList(){
+    const listEl = document.getElementById('myTemplatesList');
+    const emptyEl = document.getElementById('myTemplatesEmpty');
+    const myTemplates = loadMyTemplates();
+    listEl.innerHTML = '';
+    emptyEl.style.display = myTemplates.length ? 'none' : 'block';
+
+    myTemplates.forEach((tpl, idx) => {
+      const item = document.createElement('div');
+      item.className = 'my-template-item';
+      item.innerHTML = `
+        <div class="mt-label">${tpl.name}</div>
+        <button class="mt-insert" data-idx="${idx}">Wstaw</button>
+        <button class="mt-delete" data-idx="${idx}" title="Usuń szablon">×</button>
+      `;
+      listEl.appendChild(item);
+    });
+
+    listEl.querySelectorAll('.mt-insert').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const myTemplates = loadMyTemplates();
+        const tpl = myTemplates[+btn.dataset.idx];
+        if (!tpl) return;
+        const freshBlocks = reassignIdsForTemplate(tpl.blocks);
+        state.root = state.root.concat(freshBlocks);
+        document.getElementById('myTemplatesModal').classList.remove('show');
+        renderWorkspace();
+      });
+    });
+    listEl.querySelectorAll('.mt-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const myTemplates = loadMyTemplates();
+        const tpl = myTemplates[+btn.dataset.idx];
+        if (!tpl) return;
+        showConfirm('Usunąć szablon?', `Na pewno usunąć szablon "${tpl.name}"? Tej operacji nie da się cofnąć.`, () => {
+          const updated = loadMyTemplates();
+          updated.splice(+btn.dataset.idx, 1);
+          saveMyTemplates(updated);
+          renderMyTemplatesList();
+        });
+      });
+    });
+  }
+
+  document.getElementById('btnMyTemplates').addEventListener('click', () => {
+    renderMyTemplatesList();
+    document.getElementById('myTemplatesModal').classList.add('show');
+  });
+
+  document.getElementById('btnSaveAsMyTemplate').addEventListener('click', () => {
+    if (state.root.length === 0){
+      alert('Workspace jest pusty — zbuduj coś najpierw, żeby móc to zapisać jako szablon.');
+      return;
+    }
+    document.getElementById('saveTemplateNameInput').value = '';
+    document.getElementById('saveTemplateNameModal').classList.add('show');
+    document.getElementById('saveTemplateNameInput').focus();
+  });
+
+  document.getElementById('btnConfirmSaveTemplate').addEventListener('click', () => {
+    const name = document.getElementById('saveTemplateNameInput').value.trim();
+    if (!name){
+      document.getElementById('saveTemplateNameInput').focus();
+      return;
+    }
+    const myTemplates = loadMyTemplates();
+    myTemplates.push({ name, blocks: JSON.parse(JSON.stringify(state.root)) });
+    const ok = saveMyTemplates(myTemplates);
+    document.getElementById('saveTemplateNameModal').classList.remove('show');
+    if (!ok){
+      alert('Nie udało się zapisać szablonu — pamięć przeglądarki (localStorage) może być pełna albo niedostępna w tym trybie przeglądania.');
+    } else {
+      renderMyTemplatesList(); // myTemplatesModal stays open underneath — refresh it to show the new entry
+    }
+  });
+
   // ---- Import .sk (opens modal for paste, or reads file) ----
   document.getElementById('btnImportSk').addEventListener('click', () => {
     document.getElementById('importSkModal').classList.add('show');
@@ -4494,7 +4748,21 @@
     if (e.key === 'Escape'){
       document.querySelectorAll('.modal-overlay.show').forEach(overlay => overlay.classList.remove('show'));
     }
+    // Only handle Ctrl+Z/Y as workspace undo/redo when focus isn't in a text input — otherwise
+    // let the browser's native text-field undo happen instead (e.g. undoing a typo mid-edit).
+    const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+    if (isTyping) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey){
+      e.preventDefault();
+      undo();
+    } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))){
+      e.preventDefault();
+      redo();
+    }
   });
+  document.getElementById('btnUndo').addEventListener('click', undo);
+  document.getElementById('btnRedo').addEventListener('click', redo);
+
   document.getElementById('btnDoImportSk').addEventListener('click', () => {
     const text = document.getElementById('importSkTextarea').value;
     if (!text.trim()) return;
