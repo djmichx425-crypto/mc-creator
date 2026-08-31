@@ -80,6 +80,8 @@
   header .hbtn:hover { border-color: var(--accent); background: var(--bg-2); }
   header .hbtn.primary { background: var(--accent); border-color: var(--accent); }
   header .hbtn.primary:hover { background: var(--accent-dim); }
+  header .hbtn:disabled { opacity: 0.35; cursor: not-allowed; }
+  header .hbtn:disabled:hover { border-color: var(--line); background: var(--bg-1); }
   header input[type=file] { display: none; }
 
   .main {
@@ -660,6 +662,46 @@
     cursor: pointer;
   }
   .template-item button:hover { background: var(--accent-dim); }
+
+  .my-template-item {
+    background: var(--bg-1);
+    border: 1px solid var(--line);
+    border-radius: 10px;
+    padding: 14px;
+    margin-bottom: 10px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+  .my-template-item .mt-label {
+    font-weight: 700;
+    font-size: 13.5px;
+    flex: 1;
+  }
+  .my-template-item .mt-insert {
+    background: var(--accent);
+    border: none;
+    color: #fff;
+    border-radius: 7px;
+    padding: 8px 14px;
+    font-family: inherit;
+    font-weight: 700;
+    font-size: 12px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .my-template-item .mt-insert:hover { background: var(--accent-dim); }
+  .my-template-item .mt-delete {
+    background: none;
+    border: 1px solid var(--line);
+    color: #e5484d;
+    border-radius: 7px;
+    width: 32px; height: 32px;
+    font-size: 14px;
+    cursor: pointer;
+    flex-shrink: 0;
+  }
+  .my-template-item .mt-delete:hover { background: rgba(229,72,77,0.12); border-color: #e5484d; }
 </style>
 </head>
 <body>
@@ -670,7 +712,10 @@
     <h1>Kreator Skript</h1>
     <div class="sub">bloki jak Scratch → gotowy kod .sk</div>
     <div class="spacer"></div>
+    <button class="hbtn" id="btnUndo" title="Cofnij (Ctrl+Z)" disabled>↶</button>
+    <button class="hbtn" id="btnRedo" title="Ponów (Ctrl+Y)" disabled>↷</button>
     <button class="hbtn primary" id="btnTemplates">📚 <span class="hbtn-label">Biblioteka szablonów</span></button>
+    <button class="hbtn" id="btnMyTemplates">⭐ <span class="hbtn-label">Moje szablony</span></button>
     <button class="hbtn" id="btnImportSk">📄 <span class="hbtn-label">Importuj .sk</span></button>
     <button class="hbtn" id="btnImportJson">📂 <span class="hbtn-label">Importuj JSON</span></button>
     <button class="hbtn" id="btnExportJson">💾 <span class="hbtn-label">Eksport JSON</span></button>
@@ -749,6 +794,41 @@
     </div>
     <div class="modal-foot">
       <button class="secondary" data-close-modal="templatesModal">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- MY TEMPLATES MODAL: user's own saved fragments (localStorage-backed) -->
+<div class="modal-overlay" id="myTemplatesModal">
+  <div class="modal">
+    <div class="modal-head">Moje szablony
+      <button class="close" data-close-modal="myTemplatesModal">×</button>
+    </div>
+    <div class="modal-body">
+      <div class="modal-hint" style="margin-top:0; margin-bottom:14px;">Twoje własne zapisane fragmenty drzewa bloków — zapisywane tylko w tej przeglądarce. Zapisz obecny workspace jako szablon, żeby wstawić go ponownie później albo w innym projekcie.</div>
+      <button class="secondary" id="btnSaveAsMyTemplate" style="width:100%; margin-bottom:14px;">💾 Zapisz obecny workspace jako nowy szablon</button>
+      <div id="myTemplatesList"></div>
+      <div id="myTemplatesEmpty" class="modal-hint" style="display:none;">Nie masz jeszcze żadnych zapisanych szablonów. Zbuduj coś w workspace i kliknij przycisk powyżej.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="myTemplatesModal">Zamknij</button>
+    </div>
+  </div>
+</div>
+
+<!-- SAVE TEMPLATE NAME MODAL -->
+<div class="modal-overlay" id="saveTemplateNameModal">
+  <div class="modal" style="width:min(420px,90vw);">
+    <div class="modal-head">Nazwa szablonu
+      <button class="close" data-close-modal="saveTemplateNameModal">×</button>
+    </div>
+    <div class="modal-body">
+      <label class="flabel" style="display:block; font-size:11px; text-transform:uppercase; letter-spacing:0.08em; color:var(--text-dim); margin-bottom:7px;">Jak nazwać ten szablon?</label>
+      <input type="text" id="saveTemplateNameInput" placeholder="np. Mój system GUI" style="width:100%; background:var(--bg-1); border:1px solid var(--line); border-radius:8px; padding:9px 12px; color:var(--text); font-family:inherit; font-size:13px;">
+    </div>
+    <div class="modal-foot">
+      <button class="secondary" data-close-modal="saveTemplateNameModal">Anuluj</button>
+      <button id="btnConfirmSaveTemplate">Zapisz</button>
     </div>
   </div>
 </div>
@@ -2233,6 +2313,70 @@
   let idCounter = 1;
   function nextId(){ return 'b' + (idCounter++); }
 
+  // ============================================================
+  // UNDO / REDO
+  // Snapshot-based: on every structural change (add/remove/move block), the
+  // state BEFORE the change is pushed onto historyStack, and historyIndex
+  // moves to the newest entry. Undo steps historyIndex back and restores
+  // that snapshot; redo steps forward again. Snapshots are full JSON copies
+  // of state.root — simple and always correct, at some memory cost, capped
+  // at HISTORY_LIMIT entries so it can't grow unbounded in a long session.
+  // Field edits (typing in a text input) do NOT create snapshots — only
+  // renderWorkspace() (called for structural changes) does, so undo steps
+  // through meaningful actions rather than every keystroke.
+  // ============================================================
+  const HISTORY_LIMIT = 50;
+  let historyStack = [];
+  let historyIndex = -1;
+  let isRestoringHistory = false; // guards against undo/redo itself creating a new snapshot
+
+  function pushHistorySnapshot(){
+    if (isRestoringHistory) return;
+    const snapshot = JSON.stringify(state.root);
+    // Skip pushing if nothing actually changed since the last snapshot (avoids empty undo steps
+    // from e.g. re-rendering without any structural change actually occurring).
+    if (historyStack.length && historyStack[historyIndex] === snapshot) return;
+    // If we'd undone some steps and then made a new change, the "future" redo branch is
+    // discarded — this is standard undo/redo behavior (can't redo into a branch that no longer
+    // exists once a new edit has been made from an earlier point).
+    historyStack = historyStack.slice(0, historyIndex + 1);
+    historyStack.push(snapshot);
+    if (historyStack.length > HISTORY_LIMIT){
+      historyStack.shift();
+    } else {
+      historyIndex++;
+    }
+    updateUndoRedoButtons();
+  }
+
+  function undo(){
+    if (historyIndex <= 0) return;
+    historyIndex--;
+    isRestoringHistory = true;
+    state.root = JSON.parse(historyStack[historyIndex]);
+    renderWorkspace();
+    isRestoringHistory = false;
+    updateUndoRedoButtons();
+  }
+
+  function redo(){
+    if (historyIndex >= historyStack.length - 1) return;
+    historyIndex++;
+    isRestoringHistory = true;
+    state.root = JSON.parse(historyStack[historyIndex]);
+    renderWorkspace();
+    isRestoringHistory = false;
+    updateUndoRedoButtons();
+  }
+
+  function updateUndoRedoButtons(){
+    const undoBtn = document.getElementById('btnUndo');
+    const redoBtn = document.getElementById('btnRedo');
+    if (!undoBtn || !redoBtn) return;
+    undoBtn.disabled = historyIndex <= 0;
+    redoBtn.disabled = historyIndex >= historyStack.length - 1;
+  }
+
   const state = {
     root: [],
     targetContainerId: null, // null = root; otherwise the id of a container block to append into (tap-to-add mode)
@@ -2519,6 +2663,7 @@
   // and — for container block types — a nested block-list for children.
   // ============================================================
   function renderWorkspace(){
+    pushHistorySnapshot();
     const rootList = document.getElementById('rootList');
     rootList.innerHTML = '';
     renderBlockList(state.root, rootList);
@@ -3040,6 +3185,69 @@
     { type: 'cancel_event', re: /^cancel event$/, build: () => ({}) },
     { type: 'return_block', re: /^return\s*(.*)$/, build: m => ({ value: m[1] || '' }) },
     { type: 'set_slot', re: /^set slot (.+?) of player'?s current inventory to (.+?)(?: with lore (.+))?$/, build: m => ({ slot: m[1], item: m[2], lore: m[3] ? m[3].split(/\s+and\s+/).join('||') : '' }) },
+    { type: 'on_damage', re: /^on damage:$/, build: () => ({}) },
+    { type: 'on_block_break', re: /^on break:$/, build: () => ({}) },
+    { type: 'on_block_place', re: /^on place:$/, build: () => ({}) },
+    { type: 'on_item_drop', re: /^on drop:$/, build: () => ({}) },
+    { type: 'on_item_pickup', re: /^on pickup:$/, build: () => ({}) },
+    { type: 'on_craft', re: /^on craft:$/, build: () => ({}) },
+    { type: 'on_command_event', re: /^on command "(.+)":$/, build: m => ({ command: m[1] }) },
+    { type: 'on_world_change', re: /^on world change:$/, build: () => ({}) },
+    { type: 'on_teleport', re: /^on teleport:$/, build: () => ({}) },
+    { type: 'on_leaves_decay', re: /^on leaves decay:$/, build: () => ({}) },
+
+    // Entity/combat/equipment — these must all come BEFORE the generic set_var pattern
+    // ("^set (.+?) to (.+)$"), since several of them also start with "set " and would
+    // otherwise be swallowed by that much more general pattern first.
+    { type: 'spawn_entity', re: /^spawn (.+?) at (.+)$/, build: m => ({ entity: m[1], location: m[2] }) },
+    { type: 'set_entity_health', re: /^set (.+?)'?s health to (.+)$/, build: m => ({ entity: m[1], amount: m[2] }) },
+    { type: 'damage_entity', re: /^damage (.+?) by (.+)$/, build: m => ({ entity: m[1], amount: m[2] }) },
+    { type: 'set_entity_name', re: /^set name of (.+?) to (.+)$/, build: m => ({ entity: m[1], name: m[2] }) },
+    { type: 'set_equipment', re: /^set (helmet|chestplate|leggings|boots|tool) of (.+?) to (.+)$/, build: m => ({ slotType: m[1], target: m[2], item: m[3] }) },
+    { type: 'clear_inventory', re: /^clear (.+?)'?s inventory$/, build: m => ({ target: m[1] }) },
+    { type: 'drop_item_at', re: /^drop (.+?) at (.+)$/, build: m => ({ item: m[1], location: m[2] }) },
+    { type: 'extinguish_entity', re: /^set (.+?)'?s fire ticks to 0$/, build: m => ({ entity: m[1] }) },
+    { type: 'set_fire_ticks', re: /^set (.+?)'?s fire ticks to (.+)$/, build: m => ({ entity: m[1], ticks: m[2] }) },
+    { type: 'push_entity', re: /^push (.+?) at speed 1 in (.+)$/, build: m => ({ entity: m[1], vector: m[2] }) },
+    { type: 'set_gamemode', re: /^set gamemode of (.+?) to (.+)$/, build: m => ({ target: m[1], mode: m[2] }) },
+    { type: 'set_fly_mode', re: /^set (.+?)'?s flight mode to (true|false)$/, build: m => ({ target: m[1], enabled: m[2] === 'false' ? 'wyłączone' : 'włączone' }) },
+    { type: 'set_exp', re: /^set (.+?)'?s level to (.+)$/, build: m => ({ target: m[1], amount: m[2] }) },
+    { type: 'give_advancement', re: /^execute console command "advancement grant (.+?) only (.+)"$/, build: m => ({ target: m[1], advancement: m[2] }) },
+
+    // Lists/variables — again, specific-before-generic relative to set_var.
+    { type: 'loop_list_variable', re: /^loop \{(.+)::\*\}:$/, build: m => ({ item: 'loop-value', list: m[1] }) },
+    { type: 'clear_list_variable', re: /^clear \{(.+)::\*\}$/, build: m => ({ list: m[1] }) },
+    { type: 'add_to_list_variable', re: /^add (.+?) to \{(.+)::\*\}$/, build: m => ({ value: m[1], list: m[2] }) },
+    { type: 'remove_from_list_variable', re: /^remove (.+?) from \{(.+)::\*\}$/, build: m => ({ value: m[1], list: m[2] }) },
+    { type: 'get_list_size', re: /^set (.+?) to size of \{(.+)::\*\}$/, build: m => ({ var: m[1], list: m[2] }) },
+    { type: 'get_random_from_list', re: /^set (.+?) to a random element out of \{(.+)::\*\}$/, build: m => ({ var: m[1], list: m[2] }) },
+    { type: 'sort_list_variable', re: /^sort \{(.+)::\*\}$/, build: m => ({ list: m[1] }) },
+    { type: 'round_number_var', re: /^set (.+?) to rounded (.+)$/, build: m => ({ var: m[1], value: m[2] }) },
+    { type: 'parse_number_var', re: /^set (.+?) to (.+?) parsed as number$/, build: m => ({ var: m[1], text: m[2] }) },
+    { type: 'concat_strings', re: /^set (.+?) to \((.+?) and (.+?)\)$/, build: m => ({ var: m[1], text1: m[2], text2: m[3] }) },
+
+    // Text formatting — again before generic set_var.
+    { type: 'replace_in_text', re: /^replace (.+?) with (.+?) in (.+?) and set (.+?) to it$/, build: m => ({ old: m[1], new: m[2], text: m[3], var: m[4] }) },
+    { type: 'text_contains_check', re: /^set (.+?) to \((.+?) contains (.+?)\)$/, build: m => ({ var: m[1], text: m[2], substring: m[3] }) },
+    { type: 'uppercase_text', re: /^set (.+?) to uppercase (.+)$/, build: m => ({ var: m[1], text: m[2] }) },
+    { type: 'lowercase_text', re: /^set (.+?) to lowercase (.+)$/, build: m => ({ var: m[1], text: m[2] }) },
+    { type: 'format_colored_text', re: /^set (.+?) to colored (.+)$/, build: m => ({ var: m[1], text: m[2] }) },
+    { type: 'strip_colors_text', re: /^set (.+?) to uncolored (.+)$/, build: m => ({ var: m[1], text: m[2] }) },
+    { type: 'substring_text', re: /^set (.+?) to characters from (.+?) to (.+?) of (.+)$/, build: m => ({ var: m[1], start: m[2], end: m[3], text: m[4] }) },
+
+    // Integrations — before generic patterns where relevant.
+    { type: 'add_vault_balance', re: /^add (.+?) to (.+?)'?s balance$/, build: m => ({ amount: m[1], target: m[2] }) },
+    { type: 'remove_vault_balance', re: /^remove (.+?) from (.+?)'?s balance$/, build: m => ({ amount: m[1], target: m[2] }) },
+    { type: 'check_vault_balance', re: /^set (.+?) to (.+?)'?s balance$/, build: m => ({ var: m[1], target: m[2] }) },
+    { type: 'check_worldguard_region', re: /^execute console command "rg info -l (.+)"$/, build: m => ({ location: m[1] }) },
+    { type: 'revoke_luckperms_group', re: /^execute console command "lp user (.+?) parent remove (.+)"$/, build: m => ({ target: m[1], group: m[2] }) },
+    { type: 'check_placeholder_api', re: /^set (.+?) to (.+?) parsed for (.+)$/, build: m => ({ var: m[1], placeholder: m[2], target: m[3] }) },
+    { type: 'log_to_file', re: /^write (.+?) to file (.+)$/, build: m => ({ text: m[1], filename: m[2] }) },
+    { type: 'format_time_duration', re: /^set (.+?) to (difference between now and .+)$/, build: m => ({ var: m[1], duration: m[2] }) },
+
+    // Misc simple ones with no meaningful ambiguity risk.
+    { type: 'remove_entity', re: /^delete (.+)$/, build: m => ({ entity: m[1] }) },
+
     { type: 'set_var', re: /^set (.+?) to (.+)$/, build: m => ({ var: m[1], value: m[2] }) },
     { type: 'add_var', re: /^add (.+?) to (.+)$/, build: m => ({ value: m[1], var: m[2] }) },
     { type: 'remove_var', re: /^remove (.+?) from (.+)$/, build: m => ({ value: m[1], var: m[2] }) },
@@ -3760,6 +3968,120 @@
     document.getElementById('templatesModal').classList.add('show');
   });
 
+  // ---- My Templates (user's own saved fragments, localStorage-backed) ----
+  const MY_TEMPLATES_STORAGE_KEY = 'enchant-skript-my-templates';
+
+  function loadMyTemplates(){
+    try {
+      const raw = localStorage.getItem(MY_TEMPLATES_STORAGE_KEY);
+      return raw ? JSON.parse(raw) : [];
+    } catch(e){ return []; } // corrupted or inaccessible storage — treat as empty rather than crashing
+  }
+
+  function saveMyTemplates(list){
+    try {
+      localStorage.setItem(MY_TEMPLATES_STORAGE_KEY, JSON.stringify(list));
+      return true;
+    } catch(e){ return false; } // localStorage full or unavailable (e.g. private browsing)
+  }
+
+  // Reuses the same id-reassignment logic as JSON import, since inserting a saved template is
+  // functionally identical to importing a small JSON fragment — fresh ids avoid collisions with
+  // whatever's already in the workspace.
+  function reassignConditionIdsForTemplate(cond){
+    if (!cond) return cond;
+    return {
+      ...cond,
+      id: nextId(),
+      left: cond.left ? reassignConditionIdsForTemplate(cond.left) : cond.left,
+      right: cond.right ? reassignConditionIdsForTemplate(cond.right) : cond.right,
+    };
+  }
+  function reassignIdsForTemplate(list){
+    return list.map(block => ({
+      ...block,
+      id: nextId(),
+      children: block.children ? reassignIdsForTemplate(block.children) : block.children,
+      conditionBlock: block.conditionBlock ? reassignConditionIdsForTemplate(block.conditionBlock) : block.conditionBlock,
+    }));
+  }
+
+  function renderMyTemplatesList(){
+    const listEl = document.getElementById('myTemplatesList');
+    const emptyEl = document.getElementById('myTemplatesEmpty');
+    const myTemplates = loadMyTemplates();
+    listEl.innerHTML = '';
+    emptyEl.style.display = myTemplates.length ? 'none' : 'block';
+
+    myTemplates.forEach((tpl, idx) => {
+      const item = document.createElement('div');
+      item.className = 'my-template-item';
+      item.innerHTML = `
+        <div class="mt-label">${tpl.name}</div>
+        <button class="mt-insert" data-idx="${idx}">Wstaw</button>
+        <button class="mt-delete" data-idx="${idx}" title="Usuń szablon">×</button>
+      `;
+      listEl.appendChild(item);
+    });
+
+    listEl.querySelectorAll('.mt-insert').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const myTemplates = loadMyTemplates();
+        const tpl = myTemplates[+btn.dataset.idx];
+        if (!tpl) return;
+        const freshBlocks = reassignIdsForTemplate(tpl.blocks);
+        state.root = state.root.concat(freshBlocks);
+        document.getElementById('myTemplatesModal').classList.remove('show');
+        renderWorkspace();
+      });
+    });
+    listEl.querySelectorAll('.mt-delete').forEach(btn => {
+      btn.addEventListener('click', () => {
+        const myTemplates = loadMyTemplates();
+        const tpl = myTemplates[+btn.dataset.idx];
+        if (!tpl) return;
+        showConfirm('Usunąć szablon?', `Na pewno usunąć szablon "${tpl.name}"? Tej operacji nie da się cofnąć.`, () => {
+          const updated = loadMyTemplates();
+          updated.splice(+btn.dataset.idx, 1);
+          saveMyTemplates(updated);
+          renderMyTemplatesList();
+        });
+      });
+    });
+  }
+
+  document.getElementById('btnMyTemplates').addEventListener('click', () => {
+    renderMyTemplatesList();
+    document.getElementById('myTemplatesModal').classList.add('show');
+  });
+
+  document.getElementById('btnSaveAsMyTemplate').addEventListener('click', () => {
+    if (state.root.length === 0){
+      alert('Workspace jest pusty — zbuduj coś najpierw, żeby móc to zapisać jako szablon.');
+      return;
+    }
+    document.getElementById('saveTemplateNameInput').value = '';
+    document.getElementById('saveTemplateNameModal').classList.add('show');
+    document.getElementById('saveTemplateNameInput').focus();
+  });
+
+  document.getElementById('btnConfirmSaveTemplate').addEventListener('click', () => {
+    const name = document.getElementById('saveTemplateNameInput').value.trim();
+    if (!name){
+      document.getElementById('saveTemplateNameInput').focus();
+      return;
+    }
+    const myTemplates = loadMyTemplates();
+    myTemplates.push({ name, blocks: JSON.parse(JSON.stringify(state.root)) });
+    const ok = saveMyTemplates(myTemplates);
+    document.getElementById('saveTemplateNameModal').classList.remove('show');
+    if (!ok){
+      alert('Nie udało się zapisać szablonu — pamięć przeglądarki (localStorage) może być pełna albo niedostępna w tym trybie przeglądania.');
+    } else {
+      renderMyTemplatesList(); // myTemplatesModal stays open underneath — refresh it to show the new entry
+    }
+  });
+
   // ---- Import .sk (opens modal for paste, or reads file) ----
   document.getElementById('btnImportSk').addEventListener('click', () => {
     document.getElementById('importSkModal').classList.add('show');
@@ -3781,7 +4103,21 @@
     if (e.key === 'Escape'){
       document.querySelectorAll('.modal-overlay.show').forEach(overlay => overlay.classList.remove('show'));
     }
+    // Only handle Ctrl+Z/Y as workspace undo/redo when focus isn't in a text input — otherwise
+    // let the browser's native text-field undo happen instead (e.g. undoing a typo mid-edit).
+    const isTyping = document.activeElement && (document.activeElement.tagName === 'INPUT' || document.activeElement.tagName === 'TEXTAREA' || document.activeElement.tagName === 'SELECT');
+    if (isTyping) return;
+    if ((e.ctrlKey || e.metaKey) && e.key.toLowerCase() === 'z' && !e.shiftKey){
+      e.preventDefault();
+      undo();
+    } else if ((e.ctrlKey || e.metaKey) && (e.key.toLowerCase() === 'y' || (e.key.toLowerCase() === 'z' && e.shiftKey))){
+      e.preventDefault();
+      redo();
+    }
   });
+  document.getElementById('btnUndo').addEventListener('click', undo);
+  document.getElementById('btnRedo').addEventListener('click', redo);
+
   document.getElementById('btnDoImportSk').addEventListener('click', () => {
     const text = document.getElementById('importSkTextarea').value;
     if (!text.trim()) return;
